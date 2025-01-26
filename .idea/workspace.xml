@@ -4,27 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="26417bd6-82cc-49f3-87c5-ee079373744a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/build.gradle.kts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.jar" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradlew" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradlew.bat" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings.gradle.kts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/ConsumedExpression.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Expression.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Grammar.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Operator.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Symbol.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/GrammarTest.java" afterDir="false" />
+    <list default="true" id="26417bd6-82cc-49f3-87c5-ee079373744a" name="Changes" comment="Initial Commit">
+      <change afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/datatypes/Either.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Expression.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Expression.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Operator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Operator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Symbol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Symbol.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +26,7 @@
       <list>
         <option value="Class" />
         <option value="Record" />
+        <option value="Interface" />
       </list>
     </option>
   </component>
@@ -142,7 +128,20 @@
       <option name="presentableId" value="Default" />
       <updated>1737912858684</updated>
     </task>
+    <task id="LOCAL-00001" summary="Initial Commit">
+      <option name="closed" value="true" />
+      <created>1737916778480</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1737916778480</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Initial Commit" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial Commit" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
