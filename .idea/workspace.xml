@@ -4,12 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="26417bd6-82cc-49f3-87c5-ee079373744a" name="Changes" comment="Initial Commit">
-      <change afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/datatypes/Either.java" afterDir="false" />
+    <list default="true" id="26417bd6-82cc-49f3-87c5-ee079373744a" name="Changes" comment="First consume function">
+      <change afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/GrammarTestUtil.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/OperatorTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/SymbolTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Expression.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Expression.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/datatypes/Either.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/datatypes/Either.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Operator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Operator.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Symbol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Symbol.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/GrammarTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/GrammarTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,9 +29,9 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Class" />
         <option value="Record" />
         <option value="Interface" />
+        <option value="Class" />
       </list>
     </option>
   </component>
@@ -51,6 +56,9 @@
   "keyToString": {
     "Gradle.GrammarTest.executor": "Run",
     "Gradle.MathGrammarTests.executor": "Run",
+    "Gradle.SymbolTest.executor": "Run",
+    "Gradle.TerminalTest.executor": "Run",
+    "Gradle.TerminalTest.testOk.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
     "ignore.virus.scanning.warn.message": "true",
@@ -63,7 +71,7 @@
       <recent name="C:\Users\flori\Workspace\jetpackparser\jetpackparser\src\main\java\de\flo-gehring\jetpack" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.GrammarTest">
+  <component name="RunManager" selected="Gradle.TerminalTest">
     <configuration name="GrammarTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -112,8 +120,83 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
+    <configuration name="SymbolTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;de.flogehring.jetpack.grammar.SymbolTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <configuration name="TerminalTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;de.flogehring.jetpack.grammar.SymbolTest$TerminalTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <configuration name="TerminalTest.testOk" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;de.flogehring.jetpack.grammar.SymbolTest$TerminalTest.testOk&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.TerminalTest" />
+        <item itemvalue="Gradle.TerminalTest.testOk" />
+        <item itemvalue="Gradle.SymbolTest" />
         <item itemvalue="Gradle.GrammarTest" />
         <item itemvalue="Gradle.MathGrammarTests" />
       </list>
@@ -136,12 +219,21 @@
       <option name="project" value="LOCAL" />
       <updated>1737916778480</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="First consume function">
+      <option name="closed" value="true" />
+      <created>1737918043839</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1737918043839</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Initial Commit" />
-    <option name="LAST_COMMIT_MESSAGE" value="Initial Commit" />
+    <MESSAGE value="First consume function" />
+    <option name="LAST_COMMIT_MESSAGE" value="First consume function" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

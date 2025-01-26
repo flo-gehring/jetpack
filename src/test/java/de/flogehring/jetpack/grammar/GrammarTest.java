@@ -39,7 +39,7 @@ public class GrammarTest {
                                 Expression.star(Expression.group(
                                         Expression.sequence(
                                                 Expression.orderedChoice(
-                                                        Expression.terminal("+"),
+                                                        Expression.terminal("\\+"),
                                                         Expression.terminal("-")
                                                 ),
                                                 Expression.nonTerminal("Product")
@@ -50,7 +50,7 @@ public class GrammarTest {
                                 Expression.star(Expression.group(
                                         Expression.sequence(
                                                 Expression.orderedChoice(
-                                                        Expression.terminal("*"),
+                                                        Expression.terminal("\\*"),
                                                         Expression.terminal("/")
                                                 ),
                                                 Expression.nonTerminal("Power")
@@ -62,7 +62,7 @@ public class GrammarTest {
                                 ),
                                 Expression.optional(
                                         Expression.group(
-                                                Expression.sequence(Expression.terminal("^"), Expression.nonTerminal("Power"))
+                                                Expression.sequence(Expression.terminal("\\^"), Expression.nonTerminal("Power"))
                                         )
                                 )
                         ),
@@ -70,10 +70,10 @@ public class GrammarTest {
                                 Expression.plus(Expression.terminal("[0-9]")),
                                 Expression.sequence(
                                         Expression.sequence(
-                                                Expression.terminal("("),
+                                                Expression.terminal("\\("),
                                                 Expression.nonTerminal("Expr")
                                         ),
-                                        Expression.terminal(")")
+                                        Expression.terminal("\\)")
                                 )
                         )
                 )

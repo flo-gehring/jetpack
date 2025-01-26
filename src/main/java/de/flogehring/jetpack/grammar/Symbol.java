@@ -9,18 +9,20 @@ import java.util.regex.Pattern;
 
 sealed interface Symbol extends Expression {
 
+    static Symbol terminal(String t) {
+        return new Terminal(t);
+    }
+
     record Terminal(String symbol) implements Symbol {
         @Override
         public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<NonTerminal, Expression> grammar) {
             Pattern pattern = Pattern.compile(symbol, Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher(s.substring(currentPosition));
-
-            if(matcher.matches()) {
+            if (matcher.find()) {
                 int offset = matcher.end();
                 return Either.ofThis(new ConsumedExpression(currentPosition + offset));
-            }
-            else {
-                return Either.or(new RuntimeException("Terminal" + symbol + " did not match"));
+            } else {
+                return Either.or(new RuntimeException("Terminal: \"" + symbol + "\" did not match"));
             }
         }
     }
@@ -28,7 +30,8 @@ sealed interface Symbol extends Expression {
     record NonTerminal(String name) implements Symbol {
         @Override
         public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<NonTerminal, Expression> grammar) {
-            return null;
+            Expression expansion = grammar.apply(this);
+            return expansion.consume(s, currentPosition, grammar);
         }
     }
 }
