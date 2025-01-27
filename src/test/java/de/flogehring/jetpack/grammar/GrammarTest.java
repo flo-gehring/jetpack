@@ -3,14 +3,15 @@ package de.flogehring.jetpack.grammar;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GrammarTest {
-
-
 
 
     @Nested
@@ -21,6 +22,26 @@ public class GrammarTest {
             assertTrue(testGrammar.fitsGrammar(
                     "10"
             ));
+        }
+
+        @ParameterizedTest
+        @CsvSource(value = {
+                "One Expression,10,true",
+                "Simple Plus,10 + 10,true",
+                "Full Expression,(1)+(1),true",
+                "Unclosed Parenthesis,(1 +,false",
+                "Only Product,19 ^ 3 / 1 * 5, true",
+                "Only Product in Parenthesis,(19 ^ 3 / 1 * 5), true",
+                "Parenthesis,(1), true",
+                "(1 Plus 1),(1 +1), true",
+                "Parenthesis,2^2, true",
+                "Parenthesis,(1), true",
+                "Parenthesis,((1)), true",
+                "Parenthesis Mismatch,(1)), false",
+                "Double operators,1**1, false",
+        })
+        void testMatches(String testMessage, String expr, boolean expected) {
+            assertEquals(expected, testGrammar.fitsGrammar(expr), testMessage);
         }
 
         /**

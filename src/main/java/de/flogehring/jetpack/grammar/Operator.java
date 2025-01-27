@@ -12,7 +12,11 @@ public sealed interface Operator extends Expression {
 
         @Override
         public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
-            throw new RuntimeException("Not implemented");
+            Either<ConsumedExpression, RuntimeException> firstConsume = first.consume(s, currentPosition, grammar);
+            if (firstConsume instanceof Either.This<ConsumedExpression, RuntimeException>(var consumed)) {
+                return second.consume(s, consumed.parsePosition(), grammar);
+            }
+            return firstConsume;
         }
     }
 
@@ -56,7 +60,11 @@ public sealed interface Operator extends Expression {
 
         @Override
         public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
-            throw new RuntimeException("Not implemented");
+            if (exp.consume(s, currentPosition, grammar) instanceof Either.This<ConsumedExpression, RuntimeException> success) {
+                return success;
+            } else {
+                return Either.ofThis(new ConsumedExpression(currentPosition));
+            }
         }
     }
 
@@ -64,7 +72,21 @@ public sealed interface Operator extends Expression {
 
         @Override
         public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
-            throw new RuntimeException("Not implemented");
+            int position = currentPosition;
+            Either<ConsumedExpression, RuntimeException> firstEval = exp.consume(s, position, grammar);
+            return switch (firstEval) {
+                case Either.This<ConsumedExpression, RuntimeException> firstEvaluation -> {
+                    Either<ConsumedExpression, RuntimeException> lastEvaluation = firstEvaluation;
+                    do {
+                        lastEvaluation = exp.consume(s, position, grammar);
+                        if (lastEvaluation instanceof Either.This<ConsumedExpression, RuntimeException>(var success)) {
+                            position = success.parsePosition();
+                        }
+                    } while (lastEvaluation instanceof Either.This<ConsumedExpression, RuntimeException>);
+                    yield Either.ofThis(new ConsumedExpression(position));
+                }
+                case Either.Or<ConsumedExpression, RuntimeException> failure -> failure;
+            };
         }
     }
 

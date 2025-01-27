@@ -18,7 +18,7 @@ sealed interface Symbol extends Expression {
         public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<NonTerminal, Expression> grammar) {
             Pattern pattern = Pattern.compile(symbol, Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher(s.substring(currentPosition));
-            if (matcher.find()) {
+            if (matcher.find() && matcher.start() == 0) {
                 int offset = matcher.end();
                 return Either.ofThis(new ConsumedExpression(currentPosition + offset));
             } else {

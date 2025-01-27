@@ -9,6 +9,27 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 public class OperatorTest {
 
+
+    @Nested
+    class StarTest {
+
+        @Test
+        void testMatchNone() {
+            Expression expression = Expression.star(Expression.terminal("a"));
+            ConsumedExpression consume = expression.consume("ba", 0, GrammarTestUtil.emptyGrammar())
+                    .getEither();
+            assertEquals(0, consume.parsePosition());
+        }
+
+        @Test
+        void testMatchMultiple() {
+            Expression expression = Expression.star(Expression.terminal("a"));
+            ConsumedExpression consume = expression.consume("baaaab", 1, GrammarTestUtil.emptyGrammar())
+                    .getEither();
+            assertEquals(5, consume.parsePosition());
+        }
+    }
+
     @Nested
     class OrderedChoiceTest {
 

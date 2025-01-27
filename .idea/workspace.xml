@@ -4,17 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="26417bd6-82cc-49f3-87c5-ee079373744a" name="Changes" comment="First consume function">
-      <change afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/GrammarTestUtil.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/OperatorTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/SymbolTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="26417bd6-82cc-49f3-87c5-ee079373744a" name="Changes" comment="Works with some bugs">
+      <change afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/util/Check.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/datatypes/Either.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/datatypes/Either.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Grammar.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Grammar.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Operator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Operator.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Symbol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Symbol.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/GrammarTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/GrammarTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/OperatorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/OperatorTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,6 +23,16 @@
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
     </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <task path="$PROJECT_DIR$">
+          <activation />
+        </task>
+        <projects_view />
+      </state>
+    </system>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -41,9 +49,9 @@
   <component name="ProjectCodeStyleSettingsMigration">
     <option name="version" value="2" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 6
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
   <component name="ProjectId" id="2sAypJWWyhjzV5TNYKXJX5wJO2o" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
@@ -56,9 +64,14 @@
   "keyToString": {
     "Gradle.GrammarTest.executor": "Run",
     "Gradle.MathGrammarTests.executor": "Run",
+    "Gradle.MathGrammarTests.testMatches.executor": "Run",
+    "Gradle.OperatorTest.executor": "Run",
+    "Gradle.StarTest.executor": "Run",
+    "Gradle.StarTest.testMatchNone.executor": "Run",
     "Gradle.SymbolTest.executor": "Run",
     "Gradle.TerminalTest.executor": "Run",
     "Gradle.TerminalTest.testOk.executor": "Run",
+    "Gradle.Tests in 'de.flogehring.jetpack.grammar'.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
     "ignore.virus.scanning.warn.message": "true",
@@ -71,7 +84,7 @@
       <recent name="C:\Users\flori\Workspace\jetpackparser\jetpackparser\src\main\java\de\flo-gehring\jetpack" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.TerminalTest">
+  <component name="RunManager" selected="Gradle.MathGrammarTests.testMatches">
     <configuration name="GrammarTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -96,7 +109,7 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
-    <configuration name="MathGrammarTests" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="MathGrammarTests.testMatches" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -109,7 +122,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;de.flogehring.jetpack.grammar.GrammarTest$MathGrammarTests&quot;" />
+            <option value="&quot;de.flogehring.jetpack.grammar.GrammarTest$MathGrammarTests.testMatches&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -120,7 +133,7 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
-    <configuration name="SymbolTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="StarTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -133,7 +146,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;de.flogehring.jetpack.grammar.SymbolTest&quot;" />
+            <option value="&quot;de.flogehring.jetpack.grammar.OperatorTest$StarTest&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -144,7 +157,7 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
-    <configuration name="TerminalTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="StarTest.testMatchNone" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -157,7 +170,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;de.flogehring.jetpack.grammar.SymbolTest$TerminalTest&quot;" />
+            <option value="&quot;de.flogehring.jetpack.grammar.OperatorTest$StarTest.testMatchNone&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -168,7 +181,7 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
-    <configuration name="TerminalTest.testOk" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="Tests in 'de.flogehring.jetpack.grammar'" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -181,7 +194,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;de.flogehring.jetpack.grammar.SymbolTest$TerminalTest.testOk&quot;" />
+            <option value="&quot;de.flogehring.jetpack.grammar.*&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -194,11 +207,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Gradle.TerminalTest" />
-        <item itemvalue="Gradle.TerminalTest.testOk" />
-        <item itemvalue="Gradle.SymbolTest" />
+        <item itemvalue="Gradle.MathGrammarTests.testMatches" />
         <item itemvalue="Gradle.GrammarTest" />
-        <item itemvalue="Gradle.MathGrammarTests" />
+        <item itemvalue="Gradle.StarTest.testMatchNone" />
+        <item itemvalue="Gradle.StarTest" />
+        <item itemvalue="Gradle.Tests in 'de.flogehring.jetpack.grammar'" />
       </list>
     </recent_temporary>
   </component>
@@ -227,13 +240,22 @@
       <option name="project" value="LOCAL" />
       <updated>1737918043839</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="First consume function">
+      <option name="closed" value="true" />
+      <created>1737925880198</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1737925880198</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Initial Commit" />
     <MESSAGE value="First consume function" />
-    <option name="LAST_COMMIT_MESSAGE" value="First consume function" />
+    <MESSAGE value="Works with some bugs" />
+    <option name="LAST_COMMIT_MESSAGE" value="Works with some bugs" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
