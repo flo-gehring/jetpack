@@ -20,14 +20,20 @@ public class Grammar {
 
     public boolean fitsGrammar(String s) {
         Expression expression = rules.get(startingRules);
+        String withoutWhiteSpace = removeAllWhiteSpace(s);
         Either<ConsumedExpression, RuntimeException> consume = expression
-                .consume(s, 0, nonTerminal -> Objects.requireNonNull(
-                        rules.get(nonTerminal.name())
-                ));
-        return consume instanceof Either.This<ConsumedExpression, RuntimeException>;
+                .consume(withoutWhiteSpace,
+                        0, nonTerminal -> Objects.requireNonNull(
+                                rules.get(nonTerminal.name())
+                        ));
+        if (consume instanceof Either.This<ConsumedExpression, RuntimeException>(var consumedExpression)) {
+            return consumedExpression.parsePosition() == withoutWhiteSpace.length();
+        } else {
+            return false;
+        }
     }
 
     private static String removeAllWhiteSpace(String s) {
-        return s.replaceAll("\\w", "");
+        return s.replaceAll("\\s", "");
     }
 }

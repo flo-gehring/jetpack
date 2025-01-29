@@ -5,14 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="26417bd6-82cc-49f3-87c5-ee079373744a" name="Changes" comment="Works with some bugs">
-      <change afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/util/Check.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Grammar.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Grammar.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Operator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Operator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Symbol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/de/flogehring/jetpack/grammar/Symbol.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/GrammarTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/GrammarTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/OperatorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/de/flogehring/jetpack/grammar/OperatorTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -60,25 +54,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Gradle.GrammarTest.executor": "Run",
-    "Gradle.MathGrammarTests.executor": "Run",
-    "Gradle.MathGrammarTests.testMatches.executor": "Run",
-    "Gradle.OperatorTest.executor": "Run",
-    "Gradle.StarTest.executor": "Run",
-    "Gradle.StarTest.testMatchNone.executor": "Run",
-    "Gradle.SymbolTest.executor": "Run",
-    "Gradle.TerminalTest.executor": "Run",
-    "Gradle.TerminalTest.testOk.executor": "Run",
-    "Gradle.Tests in 'de.flogehring.jetpack.grammar'.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "onboarding.tips.debug.path": "C:/Users/flori/Workspace/jetpackparser/jetpackparser/src/main/java/de/flo-gehring/Main.java"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Gradle.GrammarTest.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.MathGrammarTests.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.MathGrammarTests.testMatches.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.OperatorTest.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.StarTest.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.StarTest.testMatchNone.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.SymbolTest.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.TerminalTest.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.TerminalTest.testOk.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.Tests in 'de.flogehring.jetpack.grammar'.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;onboarding.tips.debug.path&quot;: &quot;C:/Users/flori/Workspace/jetpackparser/jetpackparser/src/main/java/de/flo-gehring/Main.java&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\flori\Workspace\jetpackparser\jetpackparser\src\main\java\de\flo-gehring\jetpack" />
@@ -248,7 +242,15 @@
       <option name="project" value="LOCAL" />
       <updated>1737925880198</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Works with some bugs">
+      <option name="closed" value="true" />
+      <created>1738009571689</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1738009571696</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
