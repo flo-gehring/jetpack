@@ -11,6 +11,7 @@ public class Grammar {
     private final String startingRules;
     private final Map<String, Expression> rules;
 
+
     public Grammar(String startingRules, Map<String, Expression> rules) {
         Check.require(Check.checkNotNull(startingRules, rules), "Ein Parameter ist null");
         Check.require(Check.hasKey(rules, startingRules), "the starting rule has to be present in the rule map");
