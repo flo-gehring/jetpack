@@ -15,9 +15,19 @@ sealed interface Symbol extends Expression {
 
     record Terminal(String symbol) implements Symbol {
         @Override
-        public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<NonTerminal, Expression> grammar) {
+        public Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<NonTerminal, Expression> grammar) {
             Pattern pattern = Pattern.compile(symbol, Pattern.CASE_INSENSITIVE);
-            Matcher matcher = pattern.matcher(s.substring(currentPosition));
+            if (currentPosition >= input.length()) {
+                return Either.or(new RuntimeException("Out of tokens"));
+            } else {
+                String remainingToken = input.getRemainingToken(currentPosition);
+                return matchString(currentPosition, pattern, remainingToken);
+            }
+        }
+
+        private Either<ConsumedExpression, RuntimeException> matchString(int currentPosition, Pattern pattern, String remainingToken) {
+            Matcher matcher = pattern.matcher(remainingToken);
+
             if (matcher.find() && matcher.start() == 0) {
                 int offset = matcher.end();
                 return Either.ofThis(new ConsumedExpression(currentPosition + offset));
@@ -25,13 +35,14 @@ sealed interface Symbol extends Expression {
                 return Either.or(new RuntimeException("Terminal: \"" + symbol + "\" did not match"));
             }
         }
+
     }
 
     record NonTerminal(String name) implements Symbol {
         @Override
-        public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<NonTerminal, Expression> grammar) {
+        public Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<NonTerminal, Expression> grammar) {
             Expression expansion = grammar.apply(this);
-            return expansion.consume(s, currentPosition, grammar);
+            return expansion.consume(input, currentPosition, grammar);
         }
     }
 }

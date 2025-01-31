@@ -6,7 +6,7 @@ import java.util.function.Function;
 
 public sealed interface Expression permits Symbol, Operator {
 
-    Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar);
+    Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar);
 
     static Expression nonTerminal(String symbol) {
         return new Symbol.NonTerminal(symbol);

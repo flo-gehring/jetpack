@@ -16,7 +16,7 @@ public class OperatorTest {
         @Test
         void testMatchNone() {
             Expression expression = Expression.star(Expression.terminal("a"));
-            ConsumedExpression consume = expression.consume("ba", 0, GrammarTestUtil.emptyGrammar())
+            ConsumedExpression consume = expression.consume(getInput("ba"), 0, GrammarTestUtil.emptyGrammar())
                     .getEither();
             assertEquals(0, consume.parsePosition());
         }
@@ -24,7 +24,7 @@ public class OperatorTest {
         @Test
         void testMatchMultiple() {
             Expression expression = Expression.star(Expression.terminal("a"));
-            ConsumedExpression consume = expression.consume("baaaab", 1, GrammarTestUtil.emptyGrammar())
+            ConsumedExpression consume = expression.consume(getInput("baaaab"), 1, GrammarTestUtil.emptyGrammar())
                     .getEither();
             assertEquals(5, consume.parsePosition());
         }
@@ -36,7 +36,7 @@ public class OperatorTest {
         @Test
         void testOkFirst() {
             Expression expression = Expression.orderedChoice(Expression.terminal("a"), Expression.terminal("b"));
-            ConsumedExpression consume = expression.consume("a", 0, GrammarTestUtil.emptyGrammar()).getEither();
+            ConsumedExpression consume = expression.consume(getInput("a"), 0, GrammarTestUtil.emptyGrammar()).getEither();
             assertEquals(consume.parsePosition(), 1);
         }
 
@@ -44,15 +44,19 @@ public class OperatorTest {
         @Test
         void testOkSecond() {
             Expression expression = Expression.orderedChoice(Expression.terminal("a"), Expression.terminal("b"));
-            ConsumedExpression consume = expression.consume("b", 0, GrammarTestUtil.emptyGrammar()).getEither();
+            ConsumedExpression consume = expression.consume(getInput("b"), 0, GrammarTestUtil.emptyGrammar()).getEither();
             assertEquals(consume.parsePosition(), 1);
         }
 
         @Test
         void testFail() {
             Expression expression = Expression.orderedChoice(Expression.terminal("a"), Expression.terminal("b"));
-            var consume = expression.consume("c", 0, GrammarTestUtil.emptyGrammar());
+            var consume = expression.consume(getInput("c"), 0, GrammarTestUtil.emptyGrammar());
             assertInstanceOf(Either.Or.class, consume);
         }
+    }
+
+    private static Input getInput(String s) {
+        return Input.of(s, "\\s");
     }
 }

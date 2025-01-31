@@ -6,15 +6,15 @@ import java.util.function.Function;
 
 public sealed interface Operator extends Expression {
 
-    Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar);
+    Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar);
 
     record Sequence(Expression first, Expression second) implements Operator {
 
         @Override
-        public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
-            Either<ConsumedExpression, RuntimeException> firstConsume = first.consume(s, currentPosition, grammar);
+        public Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
+            Either<ConsumedExpression, RuntimeException> firstConsume = first.consume(input, currentPosition, grammar);
             if (firstConsume instanceof Either.This<ConsumedExpression, RuntimeException>(var consumed)) {
-                return second.consume(s, consumed.parsePosition(), grammar);
+                return second.consume(input, consumed.parsePosition(), grammar);
             }
             return firstConsume;
         }
@@ -24,14 +24,14 @@ public sealed interface Operator extends Expression {
 
         @Override
         public Either<ConsumedExpression, RuntimeException> consume(
-                String s,
+                Input input,
                 int currentPosition,
                 Function<Symbol.NonTerminal, Expression> grammar
         ) {
-            Either<ConsumedExpression, RuntimeException> consumeEither = either.consume(s, currentPosition, grammar);
+            Either<ConsumedExpression, RuntimeException> consumeEither = either.consume(input, currentPosition, grammar);
             return switch (consumeEither) {
                 case Either.This<ConsumedExpression, RuntimeException> ignored -> consumeEither;
-                case Either.Or<ConsumedExpression, RuntimeException> ignored -> or.consume(s, currentPosition, grammar);
+                case Either.Or<ConsumedExpression, RuntimeException> ignored -> or.consume(input, currentPosition, grammar);
             };
         }
     }
@@ -40,14 +40,14 @@ public sealed interface Operator extends Expression {
 
         @Override
         public Either<ConsumedExpression, RuntimeException> consume(
-                String s,
+                Input input,
                 int currentPosition,
                 Function<Symbol.NonTerminal, Expression> grammar
         ) {
             int position = currentPosition;
             Either<ConsumedExpression, RuntimeException> lastEvaluation;
             do {
-                lastEvaluation = exp.consume(s, position, grammar);
+                lastEvaluation = exp.consume(input, position, grammar);
                 if (lastEvaluation instanceof Either.This<ConsumedExpression, RuntimeException>(var success)) {
                     position = success.parsePosition();
                 }
@@ -59,8 +59,8 @@ public sealed interface Operator extends Expression {
     record Optional(Expression exp) implements Operator {
 
         @Override
-        public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
-            if (exp.consume(s, currentPosition, grammar) instanceof Either.This<ConsumedExpression, RuntimeException> success) {
+        public Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
+            if (exp.consume(input, currentPosition, grammar) instanceof Either.This<ConsumedExpression, RuntimeException> success) {
                 return success;
             } else {
                 return Either.ofThis(new ConsumedExpression(currentPosition));
@@ -71,14 +71,14 @@ public sealed interface Operator extends Expression {
     record Plus(Expression exp) implements Operator {
 
         @Override
-        public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
+        public Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
             int position = currentPosition;
-            Either<ConsumedExpression, RuntimeException> firstEval = exp.consume(s, position, grammar);
+            Either<ConsumedExpression, RuntimeException> firstEval = exp.consume(input, position, grammar);
             return switch (firstEval) {
                 case Either.This<ConsumedExpression, RuntimeException> firstEvaluation -> {
                     Either<ConsumedExpression, RuntimeException> lastEvaluation = firstEvaluation;
                     do {
-                        lastEvaluation = exp.consume(s, position, grammar);
+                        lastEvaluation = exp.consume(input, position, grammar);
                         if (lastEvaluation instanceof Either.This<ConsumedExpression, RuntimeException>(var success)) {
                             position = success.parsePosition();
                         }
@@ -93,8 +93,8 @@ public sealed interface Operator extends Expression {
     record Group(Expression exp) implements Operator {
 
         @Override
-        public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
-            return exp.consume(s, currentPosition, grammar);
+        public Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar) {
+            return exp.consume(input, currentPosition, grammar);
         }
     }
 }
