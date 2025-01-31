@@ -2,7 +2,6 @@ package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.util.Check;
 
-import java.security.MessageDigest;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.Map;
@@ -37,7 +36,12 @@ public class Input {
         int offsetInToken = index - startOfToken;
         Check.require(
                 offsetInToken < token.length(),
-                MessageFormat.format("Out of bounds index {0}", index)
+                MessageFormat.format(
+
+                        "Out of bounds index {0} for token {1} starting at {2} with length {3}" +
+                                " -> Offset {4} too large",
+                        index, token,startOfToken, token.length(), offsetInToken
+                )
         );
         return token.substring(offsetInToken);
     }
