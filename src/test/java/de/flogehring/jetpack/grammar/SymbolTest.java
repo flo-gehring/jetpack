@@ -1,6 +1,7 @@
 package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.datatypes.Either;
+import de.flogehring.jetpack.parse.MemoTable;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -34,7 +35,8 @@ public class SymbolTest {
                             inputString,
                             "\\s"
                     ), initialOffset,
-                    GrammarTestUtil.emptyGrammar()
+                    GrammarTestUtil.emptyGrammar(),
+                    MemoTable.of()
             );
             if (consume instanceof Either.This<ConsumedExpression, RuntimeException> actual) {
                 assertEquals(expectedOffsetConsumed, actual.get().parsePosition(), testMessage);
