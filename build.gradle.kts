@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
 plugins {
     id("java")
 }
@@ -17,8 +19,15 @@ java {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.test {
+tasks.named<Test>("test") {
     useJUnitPlatform()
+    maxHeapSize = "1G"
+    testLogging {
+        events(TestLogEvent.FAILED)
+        events(TestLogEvent.PASSED)
+        events(TestLogEvent.SKIPPED)
+    }
 }
