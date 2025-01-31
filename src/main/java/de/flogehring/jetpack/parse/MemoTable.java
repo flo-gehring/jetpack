@@ -6,7 +6,7 @@ import java.util.HashMap;
 
 public class MemoTable {
 
-    private HashMap<MemoTableKey, Integer> lookup;
+    private final HashMap<MemoTableKey, Integer> lookup;
 
     private MemoTable() {
         lookup = new HashMap<>();
@@ -29,9 +29,9 @@ public class MemoTable {
     }
 
     public MemoTableLookup get(MemoTableKey key) {
-        if(lookup.containsKey(key)) {
-            int offset  = lookup.get(key);
-            if(offset == -1) {
+        if (lookup.containsKey(key)) {
+            int offset = lookup.get(key);
+            if (offset == -1) {
                 return new MemoTableLookup.PreviousParsingFailure();
             }
             return new MemoTableLookup.Success(offset);

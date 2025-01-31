@@ -1,6 +1,7 @@
 package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.datatypes.Either;
+import de.flogehring.jetpack.parse.MemoTable;
 import de.flogehring.jetpack.util.Check;
 
 import java.text.MessageFormat;
@@ -34,9 +35,12 @@ public class Grammar {
         Input input = Input.of(s, "\\s");
         Either<ConsumedExpression, RuntimeException> consume = expression
                 .consume(input,
-                        0, nonTerminal -> Objects.requireNonNull(
+                        0,
+                        nonTerminal -> Objects.requireNonNull(
                                 rules.get(nonTerminal.name())
-                        ));
+                        ),
+                        MemoTable.of()
+                );
         if (consume instanceof Either.This<ConsumedExpression, RuntimeException>(var consumedExpression)) {
             return consumedExpression.parsePosition() == input.length();
         } else {
