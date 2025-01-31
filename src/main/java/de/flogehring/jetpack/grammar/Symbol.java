@@ -15,9 +15,9 @@ sealed interface Symbol extends Expression {
 
     record Terminal(String symbol) implements Symbol {
         @Override
-        public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<NonTerminal, Expression> grammar) {
+        public Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<NonTerminal, Expression> grammar) {
             Pattern pattern = Pattern.compile(symbol, Pattern.CASE_INSENSITIVE);
-            Matcher matcher = pattern.matcher(s.substring(currentPosition));
+            Matcher matcher = pattern.matcher(input.getRemainingToken(currentPosition));
             if (matcher.find() && matcher.start() == 0) {
                 int offset = matcher.end();
                 return Either.ofThis(new ConsumedExpression(currentPosition + offset));
@@ -29,9 +29,9 @@ sealed interface Symbol extends Expression {
 
     record NonTerminal(String name) implements Symbol {
         @Override
-        public Either<ConsumedExpression, RuntimeException> consume(String s, int currentPosition, Function<NonTerminal, Expression> grammar) {
+        public Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<NonTerminal, Expression> grammar) {
             Expression expansion = grammar.apply(this);
-            return expansion.consume(s, currentPosition, grammar);
+            return expansion.consume(input, currentPosition, grammar);
         }
     }
 }
