@@ -29,6 +29,17 @@ public class Input {
         return new Input(tokens);
     }
 
+    public int length() {
+        int result;
+        if (tokens.isEmpty()) {
+            result = 0;
+        } else {
+            Map.Entry<Integer, String> lastTokenAndIndex = tokens.lastEntry();
+            result = lastTokenAndIndex.getKey() + lastTokenAndIndex.getValue().length();
+        }
+        return result;
+    }
+
     public String getRemainingToken(int index) {
         Map.Entry<Integer, String> tokenAndStartingPosition = tokens.floorEntry(index);
         int startOfToken = tokenAndStartingPosition.getKey();
@@ -44,16 +55,5 @@ public class Input {
                 )
         );
         return token.substring(offsetInToken);
-    }
-
-    public int length() {
-        int result;
-        if (tokens.isEmpty()) {
-            result = 0;
-        } else {
-            Map.Entry<Integer, String> lastTokenAndIndex = tokens.lastEntry();
-            result = lastTokenAndIndex.getKey() + lastTokenAndIndex.getValue().length();
-        }
-        return result;
     }
 }
