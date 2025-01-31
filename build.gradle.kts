@@ -27,7 +27,6 @@ tasks.named<Test>("test") {
     maxHeapSize = "1G"
     testLogging {
         events(TestLogEvent.FAILED)
-        events(TestLogEvent.PASSED)
         events(TestLogEvent.SKIPPED)
     }
 }
