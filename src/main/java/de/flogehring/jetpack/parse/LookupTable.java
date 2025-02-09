@@ -27,10 +27,6 @@ public class LookupTable {
     }
 
     public void initRuleDescent(MemoTableKey key) {
-        Check.require(
-                !lookup.containsKey(key),
-                "Can't descent into " + key.toString()
-        );
         lookup.put(key, -1);
         leftRecursion.put(key, false);
     }
@@ -44,12 +40,15 @@ public class LookupTable {
     }
 
     public MemoTableLookup get(MemoTableKey key) {
-        if (lookup.containsKey(key)) {
+        if (leftRecursion.containsKey(key)) {
+            return new MemoTableLookup.LeftRecursion();
+        } else if (lookup.containsKey(key)) {
             int offset = lookup.get(key);
             if (offset == -1) {
                 return new MemoTableLookup.PreviousParsingFailure();
             }
             return new MemoTableLookup.Success(offset);
+
         }
         return new MemoTableLookup.NoHit();
     }

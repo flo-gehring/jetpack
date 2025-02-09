@@ -13,15 +13,8 @@ public sealed interface MemoTableLookup {
     record Success(int offset) implements MemoTableLookup {
     }
 
-    record LeftRecursion(Result result) implements MemoTableLookup {
+    record LeftRecursion() implements MemoTableLookup {
 
-      public   sealed interface Result {
-            record SeedParse(int offset) implements Result {
-            }
-
-            record Fail() implements Result {
-            }
-        }
     }
 
 }

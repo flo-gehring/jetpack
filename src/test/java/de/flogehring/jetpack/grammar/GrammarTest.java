@@ -134,6 +134,15 @@ public class GrammarTest {
 
         @Test
         @Timeout(value = 1)
+        void testHaltsSpace() {
+            boolean b = grammar.fitsGrammar(
+                    "1 - 1"
+            );
+            assertTrue(b);
+        }
+
+        @Test
+        @Timeout(value = 1)
         void testHaltsTwo() {
             boolean b = grammar.fitsGrammar(
                     "1 - 1 - 1"

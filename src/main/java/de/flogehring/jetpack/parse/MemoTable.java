@@ -26,7 +26,6 @@ public class MemoTable {
 
     public void initRuleDescent(MemoTableKey key) {
         lookup.initRuleDescent(key);
-
     }
 
 
