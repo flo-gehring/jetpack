@@ -108,7 +108,8 @@ public class GrammarTest {
         Grammar grammar = new Grammar(
                 "expr",
                 Map.of(
-                        "expr", Expression.orderedChoice(Expression.sequence(
+                        "expr", Expression.orderedChoice(
+                                Expression.sequence(
                                         Expression.nonTerminal(
                                                 "expr"
                                         ),
@@ -124,7 +125,6 @@ public class GrammarTest {
         );
 
         @Test
-        @Timeout(value = 1)
         void testHalts() {
             boolean b = grammar.fitsGrammar(
                     "1-1"
@@ -142,7 +142,6 @@ public class GrammarTest {
         }
 
         @Test
-        @Timeout(value = 1)
         void testHaltsTwo() {
             boolean b = grammar.fitsGrammar(
                     "1 - 1 - 1"

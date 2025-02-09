@@ -1,11 +1,16 @@
 package de.flogehring.jetpack.parse;
 
+import java.util.HashMap;
+import java.util.Objects;
+
 public class MemoTable {
 
     private final LookupTable lookup;
+    private final HashMap<MemoTableKey, Boolean> leftRecursion;
 
     private MemoTable() {
         lookup = LookupTable.of();
+        leftRecursion = new HashMap<>();
     }
 
     public static MemoTable of() {
@@ -21,12 +26,23 @@ public class MemoTable {
     }
 
     public MemoTableLookup get(MemoTableKey key) {
-       return lookup.get(key);
+        return lookup.get(key);
     }
 
     public void initRuleDescent(MemoTableKey key) {
         lookup.initRuleDescent(key);
+        leftRecursion.putIfAbsent(key, false);
     }
 
+    public boolean alreadyVisited(MemoTableKey key) {
+        return leftRecursion.containsKey(key);
+    }
 
+    public void setLeftRecursion(MemoTableKey key) {
+        leftRecursion.put(key, true);
+    }
+
+    public boolean getLeftRecursion(MemoTableKey key) {
+        return Objects.requireNonNull(leftRecursion.get(key));
+    }
 }

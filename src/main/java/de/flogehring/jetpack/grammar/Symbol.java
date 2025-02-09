@@ -10,7 +10,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-sealed interface Symbol extends Expression {
+public sealed interface Symbol extends Expression {
 
     static Symbol terminal(String t) {
         return new Terminal(t);
@@ -41,72 +41,105 @@ sealed interface Symbol extends Expression {
     }
 
     record NonTerminal(String name) implements Symbol {
+
         @Override
-        public Either<ConsumedExpression, RuntimeException> consume(Input input, int currentPosition, Function<NonTerminal, Expression> grammar, MemoTable memoTable) {
+        public Either<ConsumedExpression, RuntimeException> consume(
+                Input input,
+                int currentPosition,
+                Function<NonTerminal, Expression> grammar,
+                MemoTable memoTable
+        ) {
             MemoTableKey key = new MemoTableKey(name, currentPosition);
             MemoTableLookup memoTableLookup = memoTable.get(key);
-            return switch (memoTableLookup) {
+            System.out.println("Lookup" + key + " " + memoTableLookup);
+            Either<ConsumedExpression, RuntimeException> result = switch (memoTableLookup) {
                 case MemoTableLookup.NoHit() -> evaluateBody(input, currentPosition, grammar, memoTable);
                 case MemoTableLookup.Success(var parsePosition) -> Either.ofThis(
                         new ConsumedExpression(parsePosition)
                 );
-                case MemoTableLookup.PreviousParsingFailure() -> Either.or(
-                        new RuntimeException("Previous Parsing failure")
-                );
-                case MemoTableLookup.LeftRecursion() -> growLeftRecursion(
+                case MemoTableLookup.PreviousParsingFailure() -> {
+                    memoTable.setLeftRecursion(key);
+                    yield Either.or(
+                            new RuntimeException("Previous Parsing failure")
+                    );
+                }
+            };
+            if (memoTable.getLeftRecursion(key)
+                    && result instanceof Either.This<ConsumedExpression, RuntimeException>(
+                    var seedParse
+            )) {
+                result = Either.ofThis(growLeftRecursion(
+                        seedParse,
                         input,
-                        currentPosition,
+                        grammar,
+                        memoTable
+                ));
+            }
+            return result;
+        }
+
+        @Override
+        public Either<ConsumedExpression, RuntimeException> eval(Input input, int currentPosition, Function<NonTerminal, Expression> grammar, MemoTable memoTable) {
+            return evaluateBody(
+                    input,
+                    currentPosition,
+                    grammar,
+                    memoTable
+            );
+        }
+
+        private Either<ConsumedExpression, RuntimeException> evaluateBody(
+                Input input,
+                int currentPosition,
+                Function<NonTerminal, Expression> grammar,
+                MemoTable memoTable
+        ) {
+            final MemoTableKey key = new MemoTableKey(name, currentPosition);
+            if (memoTable.alreadyVisited(key)) {
+                System.out.println("Already visited" + key);
+                memoTable.setLeftRecursion(key);
+            }
+            memoTable.initRuleDescent(key);
+            System.out.println("Called: " + this.name + " at position " + currentPosition + " already visited " + memoTable.alreadyVisited(key) + " lr " + memoTable.getLeftRecursion(key));
+            Expression expansion = grammar.apply(this);
+            Either<ConsumedExpression, RuntimeException> consume = expansion.consume(input, currentPosition, grammar, memoTable);
+            switch (consume) {
+                case Either.This<ConsumedExpression, RuntimeException>(var consumedExpression) ->
+                        memoTable.insertSuccess(
+                                key, consumedExpression.parsePosition()
+                        );
+                case Either.Or<ConsumedExpression, RuntimeException>(var _) -> memoTable.insertFailure(key);
+            }
+            return consume;
+        }
+
+        private ConsumedExpression growLeftRecursion(ConsumedExpression seedParse, Input input, Function<NonTerminal, Expression> grammar, MemoTable memoTable) {
+            System.out.println("Grow left recoursion called");
+            int currentPosition = seedParse.parsePosition();
+            ConsumedExpression lastSuccessFullParse = seedParse;
+            while (true) {
+                Either<ConsumedExpression, RuntimeException> evaluated = evaluateBody(
+                        input,
+                        seedParse.parsePosition(),
                         grammar,
                         memoTable
                 );
-            };
-    }
-
-    @Override
-    public Either<ConsumedExpression, RuntimeException> eval(Input input, int currentPosition, Function<NonTerminal, Expression> grammar, MemoTable memoTable) {
-        return evaluateBody(
-                input,
-                currentPosition,
-                grammar,
-                memoTable
-        );
-    }
-
-    private Either<ConsumedExpression, RuntimeException> evaluateBody(
-            Input input,
-            int currentPosition,
-            Function<NonTerminal, Expression> grammar,
-            MemoTable memoTable
-    ) {
-        final MemoTableKey key = new MemoTableKey(name, currentPosition);
-        memoTable.initRuleDescent(key);
-        Expression expansion = grammar.apply(this);
-        Either<ConsumedExpression, RuntimeException> consume = expansion.eval(input, currentPosition, grammar, memoTable);
-        switch (consume) {
-            case Either.This<ConsumedExpression, RuntimeException>(var consumedExpression) -> memoTable.insertSuccess(
-                    key, consumedExpression.parsePosition()
-            );
-            case Either.Or<ConsumedExpression, RuntimeException>(var _) -> memoTable.insertFailure(key);
-        }
-        return consume;
-    }
-
-    private Either<ConsumedExpression, RuntimeException> growLeftRecursion(Input input, int currentPosition, Function<NonTerminal, Expression> grammar, MemoTable memoTable) {
-        System.out.println("Grow left recoursion called");
-        Either<ConsumedExpression, RuntimeException> lastSuccessFullParse = Either.or(new RuntimeException());
-        while (true) {
-            Either<ConsumedExpression, RuntimeException> evaluated = eval(input, currentPosition, grammar, memoTable);
-            switch (evaluated) {
-                case Either.This<ConsumedExpression, RuntimeException>(var consumedExpression) -> {
-                    if (consumedExpression.parsePosition() <= currentPosition) {
+                switch (evaluated) {
+                    case Either.This<ConsumedExpression, RuntimeException>(var nextStep) -> {
+                        if (nextStep.parsePosition() <= currentPosition) {
+                            System.out.println("Grow left recoursion exited, no progress");
+                            return nextStep;
+                        }
+                        memoTable.insertSuccess(new MemoTableKey(name(), seedParse.parsePosition()), nextStep.parsePosition());
+                        lastSuccessFullParse = nextStep;
+                    }
+                    case Either.Or<ConsumedExpression, RuntimeException>(var _) -> {
+                        System.out.println("Grow left recoursion exited, failure");
                         return lastSuccessFullParse;
                     }
                 }
-                case Either.Or<ConsumedExpression, RuntimeException>(var _) -> {
-                    return lastSuccessFullParse;
-                }
+
             }
         }
     }
-}
 }
