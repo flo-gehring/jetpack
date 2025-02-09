@@ -3,6 +3,7 @@ package de.flogehring.jetpack.grammar;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -99,5 +100,45 @@ public class GrammarTest {
                         )
                 )
         );
+    }
+
+    @Nested
+    class LeftRecursionTests {
+
+        Grammar grammar = new Grammar(
+                "expr",
+                Map.of(
+                        "expr", Expression.orderedChoice(Expression.sequence(
+                                        Expression.nonTerminal(
+                                                "expr"
+                                        ),
+                                        Expression.sequence(
+                                                Expression.terminal("-"),
+                                                Expression.nonTerminal("num")
+                                        )
+                                ),
+                                Expression.nonTerminal("num")
+                        ),
+                        "num", Expression.terminal("[0-9]+")
+                )
+        );
+
+        @Test
+        @Timeout(value = 1)
+        void testHalts() {
+            boolean b = grammar.fitsGrammar(
+                    "1-1"
+            );
+            assertTrue(b);
+        }
+
+        @Test
+        @Timeout(value = 1)
+        void testHaltsTwo() {
+            boolean b = grammar.fitsGrammar(
+                    "1 - 1 - 1"
+            );
+            assertTrue(b);
+        }
     }
 }

@@ -14,6 +14,15 @@ public sealed interface Expression permits Symbol, Operator {
             MemoTable memoTable
     );
 
+    default Either<ConsumedExpression, RuntimeException> eval(
+            Input input,
+            int currentPosition,
+            Function<Symbol.NonTerminal, Expression> grammar,
+            MemoTable memoTable
+    ) {
+        return consume(input, currentPosition, grammar, memoTable);
+    }
+
     static Expression nonTerminal(String symbol) {
         return new Symbol.NonTerminal(symbol);
     }

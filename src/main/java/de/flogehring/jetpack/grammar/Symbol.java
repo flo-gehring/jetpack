@@ -46,34 +46,71 @@ sealed interface Symbol extends Expression {
             MemoTableKey key = new MemoTableKey(name, currentPosition);
             MemoTableLookup memoTableLookup = memoTable.get(key);
             return switch (memoTableLookup) {
-                case MemoTableLookup.NoHit() -> consumeInput(input, currentPosition, grammar, memoTable);
+                case MemoTableLookup.NoHit() -> evaluateBody(input, currentPosition, grammar, memoTable);
                 case MemoTableLookup.Success(var parsePosition) -> Either.ofThis(
                         new ConsumedExpression(parsePosition)
                 );
                 case MemoTableLookup.PreviousParsingFailure() -> Either.or(
                         new RuntimeException("Previous Parsing failure")
                 );
+                case MemoTableLookup.LeftRecursion(var result) -> switch (result) {
+                    case MemoTableLookup.LeftRecursion.Result.Fail() ->
+                            Either.or(new RuntimeException("Left Recursion failure"));
+                    case MemoTableLookup.LeftRecursion.Result.SeedParse(var _) -> growLeftRecursion(
+                            input,
+                            currentPosition,
+                            grammar,
+                            memoTable
+                    );
+                };
             };
         }
 
-        private Either<ConsumedExpression, RuntimeException> consumeInput(
+        @Override
+        public Either<ConsumedExpression, RuntimeException> eval(Input input, int currentPosition, Function<NonTerminal, Expression> grammar, MemoTable memoTable) {
+            return evaluateBody(
+                    input,
+                    currentPosition,
+                    grammar,
+                    memoTable
+            );
+        }
+
+        private Either<ConsumedExpression, RuntimeException> evaluateBody(
                 Input input,
                 int currentPosition,
                 Function<NonTerminal, Expression> grammar,
                 MemoTable memoTable
         ) {
-            Expression expansion = grammar.apply(this);
-            Either<ConsumedExpression, RuntimeException> consume = expansion.consume(input, currentPosition, grammar, memoTable);
             final MemoTableKey key = new MemoTableKey(name, currentPosition);
+            memoTable.initRuleDescent(key);
+            Expression expansion = grammar.apply(this);
+            Either<ConsumedExpression, RuntimeException> consume = expansion.eval(input, currentPosition, grammar, memoTable);
             switch (consume) {
                 case Either.This<ConsumedExpression, RuntimeException>(var consumedExpression) ->
                         memoTable.insertSuccess(
                                 key, consumedExpression.parsePosition()
                         );
-                case Either.Or<ConsumedExpression, RuntimeException>(var _) ->
-                        memoTable.insertFailure(key);
+                case Either.Or<ConsumedExpression, RuntimeException>(var _) -> memoTable.insertFailure(key);
             }
             return consume;
+        }
+
+        private Either<ConsumedExpression, RuntimeException> growLeftRecursion(Input input, int currentPosition, Function<NonTerminal, Expression> grammar, MemoTable memoTable) {
+            Either<ConsumedExpression, RuntimeException> lastSuccessFullParse = Either.or(new RuntimeException());
+            while (true) {
+                Either<ConsumedExpression, RuntimeException> evaluated = eval(input, currentPosition, grammar, memoTable);
+                switch (evaluated) {
+                    case Either.This<ConsumedExpression, RuntimeException>(var consumedExpression) -> {
+                        if (consumedExpression.parsePosition() <= currentPosition) {
+                            return lastSuccessFullParse;
+                        }
+                    }
+                    case Either.Or<ConsumedExpression, RuntimeException>(var _) -> {
+                        return lastSuccessFullParse;
+                    }
+                }
+            }
         }
     }
 }
