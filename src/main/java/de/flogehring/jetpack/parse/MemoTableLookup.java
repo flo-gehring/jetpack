@@ -6,6 +6,11 @@ public sealed interface MemoTableLookup {
 
     }
 
+    record LeftRecursion(boolean detected) implements MemoTableLookup {
+
+
+    }
+
     record PreviousParsingFailure() implements MemoTableLookup {
 
     }

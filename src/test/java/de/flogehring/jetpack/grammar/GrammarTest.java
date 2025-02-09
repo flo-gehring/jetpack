@@ -1,6 +1,7 @@
 package de.flogehring.jetpack.grammar;
 
 
+import de.flogehring.jetpack.parse.Grammar;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -125,6 +126,14 @@ public class GrammarTest {
         );
 
         @Test
+        void testHaltsSingle() {
+            boolean b = grammar.fitsGrammar(
+                    "1"
+            );
+            assertTrue(b);
+        }
+
+        @Test
         void testHalts() {
             boolean b = grammar.fitsGrammar(
                     "1-1"
@@ -142,9 +151,17 @@ public class GrammarTest {
         }
 
         @Test
-        void testHaltsTwo() {
+        void testHaltsThree() {
             boolean b = grammar.fitsGrammar(
                     "1 - 1 - 1"
+            );
+            assertTrue(b);
+        }
+
+        @Test
+        void testHaltsThreeDifferent() {
+            boolean b = grammar.fitsGrammar(
+                    "1 - 2 - 3"
             );
             assertTrue(b);
         }

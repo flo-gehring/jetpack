@@ -26,20 +26,16 @@ public class MemoTable {
     }
 
     public MemoTableLookup get(MemoTableKey key) {
+        if (leftRecursion.containsKey(key)) {
+            return new MemoTableLookup.LeftRecursion(leftRecursion.get(key));
+        }
         return lookup.get(key);
     }
 
-    public void initRuleDescent(MemoTableKey key) {
-        lookup.initRuleDescent(key);
-        leftRecursion.putIfAbsent(key, false);
-    }
 
-    public boolean alreadyVisited(MemoTableKey key) {
-        return leftRecursion.containsKey(key);
-    }
 
-    public void setLeftRecursion(MemoTableKey key) {
-        leftRecursion.put(key, true);
+    public void setLeftRecursion(MemoTableKey key, boolean detected) {
+        leftRecursion.put(key, detected);
     }
 
     public boolean getLeftRecursion(MemoTableKey key) {
