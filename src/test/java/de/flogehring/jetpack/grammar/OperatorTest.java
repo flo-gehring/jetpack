@@ -1,10 +1,9 @@
 package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.datatypes.Either;
+import de.flogehring.jetpack.parse.EvaluateOperators;
 import de.flogehring.jetpack.parse.MemoTable;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -24,18 +23,39 @@ public class OperatorTest {
 
         @Test
         void testMatchNone() {
-            Expression expression = Expression.star(Expression.terminal("a"));
-            ConsumedExpression consume = expression.consume(getInput("ba"), 0, GrammarTestUtil.emptyGrammar(), memoTable)
+            Expression expression = Expression.terminal("a");
+            ConsumedExpression consume = EvaluateOperators.consumeStar(expression, getInput("ba"), 0, GrammarTestUtil.emptyGrammar(), memoTable)
                     .getEither();
             assertEquals(0, consume.parsePosition());
         }
 
         @Test
         void testMatchMultiple() {
-            Expression expression = Expression.star(Expression.terminal("a"));
-            ConsumedExpression consume = expression.consume(getInput("baaaab"), 1, GrammarTestUtil.emptyGrammar(), memoTable)
+            Expression expression = Expression.terminal("a");
+            ConsumedExpression consume = EvaluateOperators.consumeStar(
+                            expression,
+                            getInput("baaaab"),
+                            1,
+                            GrammarTestUtil.emptyGrammar(),
+                            memoTable
+                    )
                     .getEither();
             assertEquals(5, consume.parsePosition());
+        }
+
+        @Disabled
+        @Test
+        @Timeout(1)
+        void testStarInStar() {
+            // TODO Prevent infinite loop when evaluating star expressions
+            Expression expression = Expression.star(Expression.terminal("a"));
+            EvaluateOperators.consumeStar(expression,
+                            getInput("baaaab"),
+                            1,
+                            GrammarTestUtil.emptyGrammar(),
+                            memoTable
+                    )
+                    .getEither();
         }
     }
 
@@ -44,23 +64,20 @@ public class OperatorTest {
 
         @Test
         void testOkFirst() {
-            Expression expression = Expression.orderedChoice(Expression.terminal("a"), Expression.terminal("b"));
-            ConsumedExpression consume = expression.consume(getInput("a"), 0, GrammarTestUtil.emptyGrammar(), memoTable).getEither();
+            ConsumedExpression consume = EvaluateOperators.consumeOrdereChoice(Expression.terminal("a"), Expression.terminal("b"), getInput("a"), 0, GrammarTestUtil.emptyGrammar(), memoTable).getEither();
             assertEquals(consume.parsePosition(), 1);
         }
 
 
         @Test
         void testOkSecond() {
-            Expression expression = Expression.orderedChoice(Expression.terminal("a"), Expression.terminal("b"));
-            ConsumedExpression consume = expression.consume(getInput("b"), 0, GrammarTestUtil.emptyGrammar(), memoTable).getEither();
+            ConsumedExpression consume = EvaluateOperators.consumeOrdereChoice(Expression.terminal("a"), Expression.terminal("b"), getInput("b"), 0, GrammarTestUtil.emptyGrammar(), memoTable).getEither();
             assertEquals(consume.parsePosition(), 1);
         }
 
         @Test
         void testFail() {
-            Expression expression = Expression.orderedChoice(Expression.terminal("a"), Expression.terminal("b"));
-            var consume = expression.consume(getInput("c"), 0, GrammarTestUtil.emptyGrammar(), memoTable);
+            var consume = EvaluateOperators.consumeOrdereChoice(Expression.terminal("a"), Expression.terminal("b"), getInput("c"), 0, GrammarTestUtil.emptyGrammar(), memoTable);
             assertInstanceOf(Either.Or.class, consume);
         }
     }
