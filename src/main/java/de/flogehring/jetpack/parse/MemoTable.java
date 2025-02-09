@@ -43,6 +43,6 @@ public class MemoTable {
     }
 
     public boolean getLeftRecursion(MemoTableKey key) {
-        return Objects.requireNonNull(leftRecursion.get(key));
+        return Objects.requireNonNullElse(leftRecursion.get(key), false);
     }
 }

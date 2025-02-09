@@ -53,7 +53,14 @@ public sealed interface Symbol extends Expression {
             MemoTableLookup memoTableLookup = memoTable.get(key);
             System.out.println("Lookup" + key + " " + memoTableLookup);
             Either<ConsumedExpression, RuntimeException> result = switch (memoTableLookup) {
-                case MemoTableLookup.NoHit() -> evaluateBody(input, currentPosition, grammar, memoTable);
+                case MemoTableLookup.NoHit() -> {
+                    memoTable.initRuleDescent(key);
+                    if (memoTable.alreadyVisited(key)) {
+                        System.out.println("Already visited" + key);
+                        memoTable.setLeftRecursion(key);
+                    }
+                    yield evaluateBody(input, currentPosition, grammar, memoTable);
+                }
                 case MemoTableLookup.Success(var parsePosition) -> Either.ofThis(
                         new ConsumedExpression(parsePosition)
                 );
@@ -95,12 +102,9 @@ public sealed interface Symbol extends Expression {
                 MemoTable memoTable
         ) {
             final MemoTableKey key = new MemoTableKey(name, currentPosition);
-            if (memoTable.alreadyVisited(key)) {
-                System.out.println("Already visited" + key);
-                memoTable.setLeftRecursion(key);
-            }
-            memoTable.initRuleDescent(key);
-            System.out.println("Called: " + this.name + " at position " + currentPosition + " already visited " + memoTable.alreadyVisited(key) + " lr " + memoTable.getLeftRecursion(key));
+            System.out.println("Called: " + this.name + " at position " + currentPosition +
+                    " already visited " + memoTable.alreadyVisited(key) +
+                    " lr " + memoTable.getLeftRecursion(key));
             Expression expansion = grammar.apply(this);
             Either<ConsumedExpression, RuntimeException> consume = expansion.consume(input, currentPosition, grammar, memoTable);
             switch (consume) {
@@ -113,8 +117,36 @@ public sealed interface Symbol extends Expression {
             return consume;
         }
 
+        private Either<ConsumedExpression, RuntimeException> evalWithoutLookup(
+                Input input,
+                int currentPosition,
+                Function<NonTerminal, Expression> grammar,
+                MemoTable memoTable
+        ) {
+            Expression expression = grammar.apply(this);
+            return switch (expression) {
+                case Operator operator -> {
+                    switch (operator) {
+                        case Operator.OrderedChoice choice -> evalOrderedChoice(
+                                choice,
+                                input,
+                                currentPosition,
+                                grammar,
+                                memoTable
+                        );
+                        default -> operator.consume(input, currentPosition, grammar, memoTable);
+                    }
+                }
+                default -> expression.consume(input, currentPosition, grammar, memoTable);
+            };
+        }
+
+        private void evalOrderedChoice(Operator.OrderedChoice choice, Input input, int currentPosition, Function<NonTerminal, Expression> grammar, MemoTable memoTable) {
+            choice.either().eval(input, currentPosition, grammar, memoTable);
+        }
+
         private ConsumedExpression growLeftRecursion(ConsumedExpression seedParse, Input input, Function<NonTerminal, Expression> grammar, MemoTable memoTable) {
-            System.out.println("Grow left recoursion called");
+            System.out.println(">>> Grow left recoursion called");
             int currentPosition = seedParse.parsePosition();
             ConsumedExpression lastSuccessFullParse = seedParse;
             while (true) {
@@ -127,18 +159,18 @@ public sealed interface Symbol extends Expression {
                 switch (evaluated) {
                     case Either.This<ConsumedExpression, RuntimeException>(var nextStep) -> {
                         if (nextStep.parsePosition() <= currentPosition) {
-                            System.out.println("Grow left recoursion exited, no progress");
+                            System.out.println("<<< Grow left recursion exited, no progress");
                             return nextStep;
                         }
+                        System.out.println("-> Growing lr" + nextStep);
                         memoTable.insertSuccess(new MemoTableKey(name(), seedParse.parsePosition()), nextStep.parsePosition());
                         lastSuccessFullParse = nextStep;
                     }
                     case Either.Or<ConsumedExpression, RuntimeException>(var _) -> {
-                        System.out.println("Grow left recoursion exited, failure");
+                        System.out.println("<<< Grow left recursion exited, failure");
                         return lastSuccessFullParse;
                     }
                 }
-
             }
         }
     }
