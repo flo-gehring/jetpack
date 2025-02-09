@@ -1,6 +1,7 @@
 package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.datatypes.Either;
+import de.flogehring.jetpack.parse.Evaluate;
 import de.flogehring.jetpack.parse.MemoTable;
 import de.flogehring.jetpack.util.Check;
 
@@ -33,15 +34,19 @@ public class Grammar {
     public boolean fitsGrammar(String s) {
         Expression expression = rules.get(startingRules);
         Input input = Input.of(s, "\\s");
-        Either<ConsumedExpression, RuntimeException> consume = expression
-                .consume(input,
-                        0,
-                        nonTerminal -> Objects.requireNonNull(
-                                rules.get(nonTerminal.name())
-                        ),
-                        MemoTable.of()
-                );
-        if (consume instanceof Either.This<ConsumedExpression, RuntimeException>(var consumedExpression)) {
+        Evaluate e = new Evaluate();
+        Either<ConsumedExpression, String> consume = e.applyRule(
+                expression,
+                input,
+                0,
+                nonTerminal -> Objects.requireNonNull(
+                        rules.get(nonTerminal.name())
+                ),
+                MemoTable.of()
+
+        );
+
+        if (consume instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
             return consumedExpression.parsePosition() == input.length();
         } else {
             return false;
