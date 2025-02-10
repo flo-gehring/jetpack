@@ -36,14 +36,8 @@ public class Evaluate {
     }
 
     private static ExpressionEvaluator createEvaluatorWithApplyRule(Function<Symbol.NonTerminal, Expression> grammar, MemoTable memoTable) {
-        return ((expression, input, currentPosition) -> applyRule(
-                expression,
-                input,
-                currentPosition,
-                grammar,
-                memoTable
-        )
-        );
+        return (expression, input, currentPosition) ->
+                applyRule(expression, input, currentPosition, grammar, memoTable);
     }
 
     private static Either<ConsumedExpression, String> applySymbol(Symbol symbol, Input input, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar, MemoTable memoTable) {
