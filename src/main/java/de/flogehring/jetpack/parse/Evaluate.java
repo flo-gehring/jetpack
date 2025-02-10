@@ -98,7 +98,7 @@ public class Evaluate {
             memoTable.insertSuccess(key, consumedExpression.parsePosition());
             memoTable.setInGrowLeftRecursion(key);
             applied = growLeftRecursion(
-                    input, currentPosition, grammar, memoTable, nonTerminal
+                    applied, input, currentPosition, grammar, memoTable, nonTerminal
             );
             memoTable.removeInGrowLeftRecursion(key);
             memoTable.removeLeftRecursion(key);
@@ -107,13 +107,14 @@ public class Evaluate {
     }
 
     private static Either<ConsumedExpression, String> growLeftRecursion(
+            Either<ConsumedExpression, String> applied,
             Input input,
             int currentPosition,
             Function<Symbol.NonTerminal, Expression> grammar,
             MemoTable memoTable,
             Symbol.NonTerminal nonTerminal
     ) {
-        Either<ConsumedExpression, String> evaluated = null;
+        Either<ConsumedExpression, String> evaluated = applied;
         System.out.println("Grow Left Recursion called");
         int lastPosition = currentPosition;
         while (true) {

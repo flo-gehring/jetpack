@@ -33,7 +33,6 @@ public class Grammar {
     }
 
     public boolean fitsGrammar(String s) {
-        Expression expression = rules.get(startingRules);
         Input input = Input.of(s, "\\s");
         MemoTable memoTable = MemoTable.of();
         Either<ConsumedExpression, String> consume = Evaluate.applyRule(
@@ -45,7 +44,6 @@ public class Grammar {
                 ),
                 memoTable
         );
-
         if (consume instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
             System.out.println("Not Enough tokens matched");
             return consumedExpression.parsePosition() == input.length();
