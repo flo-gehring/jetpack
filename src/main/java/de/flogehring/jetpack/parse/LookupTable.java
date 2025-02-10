@@ -43,4 +43,8 @@ public class LookupTable {
         }
         return new MemoTableLookup.NoHit();
     }
+
+    public boolean containsKey(MemoTableKey key) {
+        return lookup.containsKey(key);
+    }
 }

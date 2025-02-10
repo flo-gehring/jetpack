@@ -46,8 +46,10 @@ public class Grammar {
         );
 
         if (consume instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
+            System.out.println("Not Enough tokens matched");
             return consumedExpression.parsePosition() == input.length();
         } else {
+            System.out.println("Failed match because " + consume.getOr());
             return false;
         }
     }

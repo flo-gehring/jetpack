@@ -32,13 +32,19 @@ public class MemoTable {
         return lookup.get(key);
     }
 
-
-
     public void setLeftRecursion(MemoTableKey key, boolean detected) {
         leftRecursion.put(key, detected);
     }
 
     public boolean getLeftRecursion(MemoTableKey key) {
         return Objects.requireNonNullElse(leftRecursion.get(key), false);
+    }
+
+    public void removeLeftRecursion(MemoTableKey key) {
+        leftRecursion.remove(key);
+    }
+
+    public MemoTableLookup getLookupIgnoreLeftRecursion(MemoTableKey key) {
+        return lookup.get(key);
     }
 }
