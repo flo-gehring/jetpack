@@ -126,28 +126,29 @@ public class GrammarTest {
         );
 
         @Test
-        void testHaltsSingle() {
-            boolean b = grammar.fitsGrammar(
-                    "1"
-            );
-            assertTrue(b);
-        }
-
-        @Test
-        void testHalts() {
-            boolean b = grammar.fitsGrammar(
-                    "1-1"
-            );
-            assertTrue(b);
-        }
-
-        @Test
         @Timeout(value = 1)
         void testHaltsSpace() {
             boolean b = grammar.fitsGrammar(
                     "1 - 1"
             );
             assertTrue(b);
+        }
+
+        @CsvSource(value = {
+                "Single Number,1,true",
+                "Two Numbers,1-1,true",
+                "Three Numbers,1-1-1,true",
+                "Multiple Different,1 - 1 -2 -3-4-1,true",
+                "Does not match because expr not completed,1 - ,false",
+                "Completely wrong,1 - asdf ,false"
+        })
+        @ParameterizedTest
+        @Timeout(1)
+        void test(String testMessage, String expression, boolean expected) {
+            boolean actual = grammar.fitsGrammar(
+                    expression
+            );
+            assertEquals(expected, actual, testMessage);
         }
 
         @Test
@@ -162,6 +163,22 @@ public class GrammarTest {
         void testHaltsThreeDifferent() {
             boolean b = grammar.fitsGrammar(
                     "1 - 2 - 3"
+            );
+            assertTrue(b);
+        }
+
+        @Test
+        void testHaltsSingle() {
+            boolean b = grammar.fitsGrammar(
+                    "1"
+            );
+            assertTrue(b);
+        }
+
+        @Test
+        void testHalts() {
+            boolean b = grammar.fitsGrammar(
+                    "1-1"
             );
             assertTrue(b);
         }

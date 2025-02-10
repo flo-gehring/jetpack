@@ -39,16 +39,12 @@ public class Grammar {
                 Expression.nonTerminal(startingRules),
                 input,
                 0,
-                nonTerminal -> Objects.requireNonNull(
-                        rules.get(nonTerminal.name())
-                ),
+                nonTerminal -> Objects.requireNonNull(rules.get(nonTerminal.name())),
                 memoTable
         );
         if (consume instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
-            System.out.println("Not Enough tokens matched");
             return consumedExpression.parsePosition() == input.length();
         } else {
-            System.out.println("Consume " + consume);
             return false;
         }
     }
