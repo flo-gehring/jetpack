@@ -66,8 +66,14 @@ public class Evaluate {
             case MemoTableLookup.NoHit() ->
                     tryParseNonterminal(input, currentPosition, grammar, memoTable, nonTerminal);
             case MemoTableLookup.LeftRecursion(boolean _) -> {
-                memoTable.setLeftRecursion(key, true);
-                yield Either.or("Left Recursion detected");
+                if (memoTable.getInGrowLeftRecursion(key) && memoTable.getLookupIgnoreLeftRecursion(key) instanceof MemoTableLookup.Success(
+                        var consumed
+                )) {
+                    yield Either.ofThis(new ConsumedExpression(consumed));
+                } else {
+                    memoTable.setLeftRecursionDetected(key, true);
+                    yield Either.or("Left Recursion detected");
+                }
             }
             case MemoTableLookup.Success(var position) -> Either.ofThis(new ConsumedExpression(position));
             case MemoTableLookup.PreviousParsingFailure() -> Either.or("Previous failure");
@@ -82,7 +88,7 @@ public class Evaluate {
             Symbol.NonTerminal nonTerminal
     ) {
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        memoTable.setLeftRecursion(key, false);
+        memoTable.setLeftRecursionDetected(key, false);
         Either<ConsumedExpression, String> applied = applyNonterminalWithoutLookup(
                 input, currentPosition, grammar, memoTable, nonTerminal
         );
@@ -90,9 +96,11 @@ public class Evaluate {
         if (detected && applied instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
             memoTable.removeLeftRecursion(key);
             memoTable.insertSuccess(key, consumedExpression.parsePosition());
+            memoTable.setInGrowLeftRecursion(key);
             applied = growLeftRecursion(
                     input, currentPosition, grammar, memoTable, nonTerminal
             );
+            memoTable.removeInGrowLeftRecursion(key);
             memoTable.removeLeftRecursion(key);
         }
         return applied;
@@ -108,13 +116,13 @@ public class Evaluate {
         Either<ConsumedExpression, String> evaluated = null;
         System.out.println("Grow Left Recursion called");
         int lastPosition = currentPosition;
-        ExpressionEvaluator evaluator = createEvaluatorWithoutGrowLeftRecursion(
-                grammar,
-                memoTable
-        );
         while (true) {
-            Either<ConsumedExpression, String> evaluatedNonTerminal = evaluator.resolveExpression(
-                    nonTerminal, input, currentPosition
+            Either<ConsumedExpression, String> evaluatedNonTerminal = evaluateNonterminal(
+                    nonTerminal,
+                    input,
+                    currentPosition,
+                    grammar,
+                    memoTable
             );
             if (evaluatedNonTerminal instanceof Either.This<ConsumedExpression, String>(
                     var consumedExpression
@@ -129,7 +137,6 @@ public class Evaluate {
                 lastPosition = consumedExpression.parsePosition();
                 memoTable.insertSuccess(new MemoTableKey(nonTerminal.name(), currentPosition), consumedExpression.parsePosition());
             } else {
-                System.out.println("Grow left recursion exited via failure" + evaluated.getEither().parsePosition());
                 return evaluated;
             }
         }
@@ -147,64 +154,6 @@ public class Evaluate {
         return applyRule(expression, input, currentPosition, grammar, memoTable);
     }
 
-    private static ExpressionEvaluator createEvaluatorWithoutGrowLeftRecursion(
-            Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
-    ) {
-        return new ExpressionEvaluator() {
-            @Override
-            public Either<ConsumedExpression, String> resolveExpression(Expression expression, Input input, int currentPositio) {
-                return switch (expression) {
-                    case Operator operator -> EvaluateOperators.applyOperator(
-                            operator,
-                            input,
-                            currentPositio,
-                            createEvaluatorWithoutGrowLeftRecursion(grammar, memoTable)
-                    );
-                    case Symbol symbol -> switch (symbol) {
-                        case Symbol.NonTerminal nonTerminal -> applyNonterminalWithoutLeftRecursion(
-                                input,
-                                currentPositio,
-                                nonTerminal,
-                                memoTable,
-                                grammar
-                        );
-                        case Symbol.Terminal(var t) -> EvaluateTerminal.applyTerminal(
-                                t, input, currentPositio
-                        );
-                    };
-                };
-            }
-
-            private Either<ConsumedExpression, String> applyNonterminalWithoutLeftRecursion(
-                    Input input,
-                    int currentPositio, Symbol.NonTerminal nonTerminal,
-                    MemoTable memoTable,
-                    Function<Symbol.NonTerminal, Expression> grammar
-            ) {
-                MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPositio);
-                MemoTableLookup lookupIgnoreLeftRecursion = memoTable.getLookupIgnoreLeftRecursion(key);
-                Either<ConsumedExpression, String> result = switch (lookupIgnoreLeftRecursion) {
-                    case MemoTableLookup.LeftRecursion _ -> throw new RuntimeException("Contract broken");
-                    case MemoTableLookup.NoHit() -> {
-                        memoTable.insertFailure(key);
-                        yield this.resolveExpression(grammar.apply(nonTerminal), input, currentPositio);
-                    }
-                    case MemoTableLookup.Success(var consumed) -> Either.ofThis(new ConsumedExpression(consumed));
-                    case MemoTableLookup.PreviousParsingFailure() -> Either.or("Previous failure");
-                };
-                switch (result) {
-                    case Either.This<ConsumedExpression, String>(var consumedExpression) -> memoTable.insertSuccess(
-                            key, consumedExpression.parsePosition()
-                    );
-                    case Either.Or<ConsumedExpression, String> _ ->
-                        memoTable.insertFailure(key);
-                }
-                return result;
-            }
-        };
-    }
-
     private static Either<ConsumedExpression, String> applyNonterminalWithoutLookup(
             Input input,
             int currentPosition,
@@ -213,18 +162,18 @@ public class Evaluate {
             Symbol.NonTerminal nonTerminal
     ) {
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        Either<ConsumedExpression, String> consumedExpressionStringEither = applyRule(
+        Either<ConsumedExpression, String> consumedInput = applyRule(
                 grammar.apply(nonTerminal),
                 input,
                 currentPosition,
                 grammar,
                 memoTable
         );
-        if (consumedExpressionStringEither instanceof Either.This<ConsumedExpression, String>(var success)) {
+        if (consumedInput instanceof Either.This<ConsumedExpression, String>(var success)) {
             memoTable.insertSuccess(key, success.parsePosition());
         } else {
             memoTable.insertFailure(key);
         }
-        return consumedExpressionStringEither;
+        return consumedInput;
     }
 }

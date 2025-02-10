@@ -7,10 +7,12 @@ public class MemoTable {
 
     private final LookupTable lookup;
     private final HashMap<MemoTableKey, Boolean> leftRecursion;
+    private final HashMap<MemoTableKey, Boolean> inGrowLeftRecursion;
 
     private MemoTable() {
         lookup = LookupTable.of();
         leftRecursion = new HashMap<>();
+        inGrowLeftRecursion = new HashMap<>();
     }
 
     public static MemoTable of() {
@@ -32,8 +34,16 @@ public class MemoTable {
         return lookup.get(key);
     }
 
-    public void setLeftRecursion(MemoTableKey key, boolean detected) {
+    public void setLeftRecursionDetected(MemoTableKey key, boolean detected) {
         leftRecursion.put(key, detected);
+    }
+
+    public boolean getInGrowLeftRecursion(MemoTableKey key) {
+        return inGrowLeftRecursion.getOrDefault(key, false);
+    }
+
+    public void setInGrowLeftRecursion(MemoTableKey key) {
+         inGrowLeftRecursion.put(key, true);
     }
 
     public boolean getLeftRecursion(MemoTableKey key) {
@@ -46,5 +56,9 @@ public class MemoTable {
 
     public MemoTableLookup getLookupIgnoreLeftRecursion(MemoTableKey key) {
         return lookup.get(key);
+    }
+
+    public void removeInGrowLeftRecursion(MemoTableKey key) {
+        inGrowLeftRecursion.remove(key);
     }
 }

@@ -35,21 +35,22 @@ public class Grammar {
     public boolean fitsGrammar(String s) {
         Expression expression = rules.get(startingRules);
         Input input = Input.of(s, "\\s");
+        MemoTable memoTable = MemoTable.of();
         Either<ConsumedExpression, String> consume = Evaluate.applyRule(
-                expression,
+                Expression.nonTerminal(startingRules),
                 input,
                 0,
                 nonTerminal -> Objects.requireNonNull(
                         rules.get(nonTerminal.name())
                 ),
-                MemoTable.of()
+                memoTable
         );
 
         if (consume instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
             System.out.println("Not Enough tokens matched");
             return consumedExpression.parsePosition() == input.length();
         } else {
-            System.out.println("Failed match because " + consume.getOr());
+            System.out.println("Consume " + consume);
             return false;
         }
     }
