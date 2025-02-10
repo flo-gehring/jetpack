@@ -10,7 +10,13 @@ import static de.flogehring.jetpack.parse.Evaluate.applyRule;
 public class EvaluateOperators {
 
 
-    public static Either<ConsumedExpression, String> applyOperator(Operator op, Input input, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar, MemoTable memoTable) {
+    public static Either<ConsumedExpression, String> applyOperator(
+            Operator op,
+            Input input,
+            int currentPosition,
+            Function<Symbol.NonTerminal, Expression> grammar,
+            MemoTable memoTable
+    ) {
         return switch (op) {
             case Operator.OrderedChoice(var either, var or) -> consumeOrdereChoice(
                     either, or, input, currentPosition, grammar, memoTable
@@ -48,7 +54,7 @@ public class EvaluateOperators {
         };
     }
 
-    public static Either<ConsumedExpression, String> consumeOptional(
+    private static Either<ConsumedExpression, String> consumeOptional(
             Expression exp,
             Input input,
             int position,
@@ -63,7 +69,7 @@ public class EvaluateOperators {
 
     }
 
-    public static Either<ConsumedExpression, String> consumePlus(
+    private static Either<ConsumedExpression, String> consumePlus(
             Expression exp,
             Input input,
             int currentPosition,
@@ -86,10 +92,9 @@ public class EvaluateOperators {
             }
             case Either.Or<ConsumedExpression, String> failure -> failure;
         };
-
     }
 
-    public static Either<ConsumedExpression, String> consumeStar(
+    private static Either<ConsumedExpression, String> consumeStar(
             Expression exp,
             Input input,
             int position,
@@ -107,7 +112,7 @@ public class EvaluateOperators {
         return Either.ofThis(new ConsumedExpression(lastPosition));
     }
 
-    public static Either<ConsumedExpression, String> consumeSequence(
+    private static Either<ConsumedExpression, String> consumeSequence(
             Expression first,
             Expression second,
             Input input,

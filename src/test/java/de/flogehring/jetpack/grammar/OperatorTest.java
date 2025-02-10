@@ -20,20 +20,23 @@ public class OperatorTest {
     @Nested
     class StarTest {
 
-
         @Test
         void testMatchNone() {
-            Expression expression = Expression.terminal("a");
-            ConsumedExpression consume = EvaluateOperators.consumeStar(expression, getInput("ba"), 0, GrammarTestUtil.emptyGrammar(), memoTable)
+            ConsumedExpression consume = EvaluateOperators.applyOperator(
+                            new Operator.Star(Expression.terminal("a")),
+                            getInput("ba"),
+                            0,
+                            GrammarTestUtil.emptyGrammar(),
+                            memoTable
+                    )
                     .getEither();
             assertEquals(0, consume.parsePosition());
         }
 
         @Test
         void testMatchMultiple() {
-            Expression expression = Expression.terminal("a");
-            ConsumedExpression consume = EvaluateOperators.consumeStar(
-                            expression,
+            ConsumedExpression consume = EvaluateOperators.applyOperator(
+                            new Operator.Star(Expression.terminal("a")),
                             getInput("baaaab"),
                             1,
                             GrammarTestUtil.emptyGrammar(),
@@ -47,9 +50,7 @@ public class OperatorTest {
         @Test
         @Timeout(1)
         void testStarInStar() {
-            // TODO Prevent infinite loop when evaluating star expressions
-            Expression expression = Expression.star(Expression.terminal("a"));
-            EvaluateOperators.consumeStar(expression,
+            EvaluateOperators.applyOperator(new Operator.Star(Expression.star(Expression.terminal("a"))),
                             getInput("baaaab"),
                             1,
                             GrammarTestUtil.emptyGrammar(),
@@ -64,20 +65,41 @@ public class OperatorTest {
 
         @Test
         void testOkFirst() {
-            ConsumedExpression consume = EvaluateOperators.consumeOrdereChoice(Expression.terminal("a"), Expression.terminal("b"), getInput("a"), 0, GrammarTestUtil.emptyGrammar(), memoTable).getEither();
+            ConsumedExpression consume = EvaluateOperators.applyOperator(
+                    new Operator.OrderedChoice(
+                            Expression.terminal("a"),
+                            Expression.terminal("b")
+                    ),
+                    getInput("a"),
+                    0,
+                    GrammarTestUtil.emptyGrammar(),
+                    memoTable
+            ).getEither();
             assertEquals(consume.parsePosition(), 1);
         }
 
 
         @Test
         void testOkSecond() {
-            ConsumedExpression consume = EvaluateOperators.consumeOrdereChoice(Expression.terminal("a"), Expression.terminal("b"), getInput("b"), 0, GrammarTestUtil.emptyGrammar(), memoTable).getEither();
+            ConsumedExpression consume = EvaluateOperators.applyOperator(
+                    new Operator.OrderedChoice(Expression.terminal("a"), Expression.terminal("b")),
+                    getInput("b"),
+                    0,
+                    GrammarTestUtil.emptyGrammar(),
+                    memoTable
+            ).getEither();
             assertEquals(consume.parsePosition(), 1);
         }
 
         @Test
         void testFail() {
-            var consume = EvaluateOperators.consumeOrdereChoice(Expression.terminal("a"), Expression.terminal("b"), getInput("c"), 0, GrammarTestUtil.emptyGrammar(), memoTable);
+            var consume = EvaluateOperators.applyOperator(
+                    new Operator.OrderedChoice(Expression.terminal("a"), Expression.terminal("b")),
+                    getInput("c"),
+                    0,
+                    GrammarTestUtil.emptyGrammar(),
+                    memoTable
+            );
             assertInstanceOf(Either.Or.class, consume);
         }
     }
