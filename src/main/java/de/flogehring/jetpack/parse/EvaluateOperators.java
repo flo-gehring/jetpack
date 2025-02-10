@@ -1,11 +1,10 @@
 package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
-import de.flogehring.jetpack.grammar.*;
-
-import java.util.function.Function;
-
-import static de.flogehring.jetpack.parse.Evaluate.applyRule;
+import de.flogehring.jetpack.grammar.ConsumedExpression;
+import de.flogehring.jetpack.grammar.Expression;
+import de.flogehring.jetpack.grammar.Input;
+import de.flogehring.jetpack.grammar.Operator;
 
 public class EvaluateOperators {
 
@@ -14,43 +13,38 @@ public class EvaluateOperators {
             Operator op,
             Input input,
             int currentPosition,
-            Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+            ExpressionEvaluator evaluator
     ) {
         return switch (op) {
             case Operator.OrderedChoice(var either, var or) -> consumeOrdereChoice(
-                    either, or, input, currentPosition, grammar, memoTable
+                    either, or, input, currentPosition, evaluator
             );
             case Operator.Sequence(var first, var second) -> consumeSequence(
                     first,
                     second,
                     input,
                     currentPosition,
-                    grammar,
-                    memoTable
+                    evaluator
             );
             case Operator.Star(var expression) -> consumeStar(
                     expression,
                     input,
                     currentPosition,
-                    grammar,
-                    memoTable
+                    evaluator
             );
             case Operator.Plus(var expression) -> consumePlus(
                     expression,
                     input,
                     currentPosition,
-                    grammar,
-                    memoTable
+                    evaluator
             );
             case Operator.Optional(var expression) -> consumeOptional(
                     expression,
                     input,
                     currentPosition,
-                    grammar,
-                    memoTable
+                    evaluator
             );
-            case Operator.Group(var expression) -> applyRule(expression, input, currentPosition, grammar, memoTable);
+            case Operator.Group(var expression) -> evaluator.resolveExpression(expression, input, currentPosition);
         };
     }
 
@@ -58,10 +52,9 @@ public class EvaluateOperators {
             Expression exp,
             Input input,
             int position,
-            Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+            ExpressionEvaluator expressionEvaluator
     ) {
-        if (applyRule(exp, input, position, grammar, memoTable) instanceof Either.This<ConsumedExpression, String> success) {
+        if (expressionEvaluator.resolveExpression(exp, input, position) instanceof Either.This<ConsumedExpression, String> success) {
             return success;
         } else {
             return Either.ofThis(new ConsumedExpression(position));
@@ -73,17 +66,16 @@ public class EvaluateOperators {
             Expression exp,
             Input input,
             int currentPosition,
-            Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+            ExpressionEvaluator evaluator
     ) {
         int position = currentPosition;
-        Either<ConsumedExpression, String> firstEval = applyRule(exp, input, position, grammar, memoTable);
+        Either<ConsumedExpression, String> firstEval = evaluator.resolveExpression(exp, input, position);
         return switch (firstEval) {
             case Either.This<ConsumedExpression, String>(var consumedExpression) -> {
                 position = consumedExpression.parsePosition();
                 Either<ConsumedExpression, String> lastEvaluation;
                 do {
-                    lastEvaluation = applyRule(exp, input, position, grammar, memoTable);
+                    lastEvaluation = evaluator.resolveExpression(exp, input, position);
                     if (lastEvaluation instanceof Either.This<ConsumedExpression, String>(var success)) {
                         position = success.parsePosition();
                     }
@@ -98,13 +90,12 @@ public class EvaluateOperators {
             Expression exp,
             Input input,
             int position,
-            Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+            ExpressionEvaluator evaluator
     ) {
         Either<ConsumedExpression, String> lastEvaluation;
         int lastPosition = position;
         do {
-            lastEvaluation = applyRule(exp, input, lastPosition, grammar, memoTable);
+            lastEvaluation = evaluator.resolveExpression(exp, input, lastPosition);
             if (lastEvaluation instanceof Either.This<ConsumedExpression, String>(var success)) {
                 lastPosition = success.parsePosition();
             }
@@ -117,12 +108,11 @@ public class EvaluateOperators {
             Expression second,
             Input input,
             int currentPosition,
-            Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+           ExpressionEvaluator expressionEvaluator
     ) {
-        Either<ConsumedExpression, String> firstConsume = applyRule(first, input, currentPosition, grammar, memoTable);
+        Either<ConsumedExpression, String> firstConsume = expressionEvaluator.resolveExpression(first, input, currentPosition);
         if (firstConsume instanceof Either.This<ConsumedExpression, String>(ConsumedExpression consumed)) {
-            return applyRule(second, input, consumed.parsePosition(), grammar, memoTable);
+            return expressionEvaluator.resolveExpression(second, input, consumed.parsePosition());
         }
         return firstConsume;
     }
@@ -132,14 +122,13 @@ public class EvaluateOperators {
             Expression or,
             Input input,
             int currentPosition,
-            Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+            ExpressionEvaluator evaluator
     ) {
-        Either<ConsumedExpression, String> consumeEither = applyRule(either, input, currentPosition, grammar, memoTable);
+        Either<ConsumedExpression, String> consumeEither = evaluator.resolveExpression(either, input, currentPosition);
         return switch (consumeEither) {
             case Either.This<ConsumedExpression, String> ignored -> consumeEither;
             case Either.Or<ConsumedExpression, String> ignored ->
-                    applyRule(or, input, currentPosition, grammar, memoTable);
+                    evaluator.resolveExpression(or, input, currentPosition);
         };
     }
 }

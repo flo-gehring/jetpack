@@ -2,6 +2,8 @@ package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.parse.EvaluateOperators;
+import de.flogehring.jetpack.parse.EvaluateTerminal;
+import de.flogehring.jetpack.parse.ExpressionEvaluator;
 import de.flogehring.jetpack.parse.MemoTable;
 import org.junit.jupiter.api.*;
 
@@ -26,8 +28,7 @@ public class OperatorTest {
                             new Operator.Star(Expression.terminal("a")),
                             getInput("ba"),
                             0,
-                            GrammarTestUtil.emptyGrammar(),
-                            memoTable
+                            createTerminalEvaluator()
                     )
                     .getEither();
             assertEquals(0, consume.parsePosition());
@@ -39,8 +40,7 @@ public class OperatorTest {
                             new Operator.Star(Expression.terminal("a")),
                             getInput("baaaab"),
                             1,
-                            GrammarTestUtil.emptyGrammar(),
-                            memoTable
+                            createTerminalEvaluator()
                     )
                     .getEither();
             assertEquals(5, consume.parsePosition());
@@ -53,11 +53,29 @@ public class OperatorTest {
             EvaluateOperators.applyOperator(new Operator.Star(Expression.star(Expression.terminal("a"))),
                             getInput("baaaab"),
                             1,
-                            GrammarTestUtil.emptyGrammar(),
-                            memoTable
+                            createTerminalEvaluator()
                     )
                     .getEither();
         }
+    }
+
+    private ExpressionEvaluator createTerminalEvaluator() {
+        return (expression, input, currentPositio) -> switch (expression) {
+            case Operator op -> EvaluateOperators.applyOperator(
+                    op,
+                    input,
+                    currentPositio,
+                    createTerminalEvaluator()
+            );
+            case Symbol symbol -> extracted(input, currentPositio, symbol);
+        };
+    }
+
+    private Either<ConsumedExpression, String> extracted(Input input, int currentPositio, Symbol symbol) {
+        return switch (symbol) {
+            case Symbol.Terminal t -> EvaluateTerminal.applyTerminal(t.symbol(), input, currentPositio);
+            case null, default -> throw new RuntimeException();
+        };
     }
 
     @Nested
@@ -72,8 +90,7 @@ public class OperatorTest {
                     ),
                     getInput("a"),
                     0,
-                    GrammarTestUtil.emptyGrammar(),
-                    memoTable
+                    createTerminalEvaluator()
             ).getEither();
             assertEquals(consume.parsePosition(), 1);
         }
@@ -85,8 +102,7 @@ public class OperatorTest {
                     new Operator.OrderedChoice(Expression.terminal("a"), Expression.terminal("b")),
                     getInput("b"),
                     0,
-                    GrammarTestUtil.emptyGrammar(),
-                    memoTable
+                    createTerminalEvaluator()
             ).getEither();
             assertEquals(consume.parsePosition(), 1);
         }
@@ -97,8 +113,7 @@ public class OperatorTest {
                     new Operator.OrderedChoice(Expression.terminal("a"), Expression.terminal("b")),
                     getInput("c"),
                     0,
-                    GrammarTestUtil.emptyGrammar(),
-                    memoTable
+                    createTerminalEvaluator()
             );
             assertInstanceOf(Either.Or.class, consume);
         }

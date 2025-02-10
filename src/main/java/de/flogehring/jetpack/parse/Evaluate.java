@@ -23,8 +23,7 @@ public class Evaluate {
                     op,
                     input,
                     currentPosition,
-                    grammar,
-                    memoTable
+                    createEvaluatorWithApplyRule(grammar, memoTable)
             );
             case Symbol sym -> applySymbol(
                     sym,
@@ -36,6 +35,17 @@ public class Evaluate {
         };
     }
 
+    private static ExpressionEvaluator createEvaluatorWithApplyRule(Function<Symbol.NonTerminal, Expression> grammar, MemoTable memoTable) {
+        return ((expression, input, currentPosition) -> applyRule(
+                expression,
+                input,
+                currentPosition,
+                grammar,
+                memoTable
+        )
+        );
+    }
+
     private static Either<ConsumedExpression, String> evaluateWithoutLeftRecursionDetection(
             Expression expression,
             Input input,
@@ -43,7 +53,33 @@ public class Evaluate {
             Function<Symbol.NonTerminal, Expression> grammar,
             MemoTable memoTable
     ) {
+        return switch (expression) {
+            case Operator op -> applyOperator(
+                    op,
+                    input,
+                    currentPosition,
+                    createEvaluatorWithApplyRule(grammar, memoTable)
+            );
+            case Symbol sym -> evaluateNonTerminalWithoutLeftRecursionDetection(
+                    sym,
+                    input,
+                    currentPosition,
+                    grammar,
+                    memoTable
+            );
+        };
+    }
+
+    private static Either<ConsumedExpression, String> evaluateNonTerminalWithoutLeftRecursionDetection(
+            Expression expression,
+            Input input,
+            int currentPosition,
+            Function<Symbol.NonTerminal, Expression> grammar,
+            MemoTable memoTable) {
+
         return null;
+
+
     }
 
 
@@ -106,6 +142,7 @@ public class Evaluate {
             Symbol.NonTerminal nonTerminal
     ) {
         Either<ConsumedExpression, String> evaluated = null;
+        System.out.println("Grow Left Recursion called");
         while (true) {
             Either<ConsumedExpression, String> evaluatedNonTerminal = evaluateNonterminal(
                     nonTerminal, input, currentPosition, grammar, memoTable
