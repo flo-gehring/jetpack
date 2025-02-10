@@ -115,7 +115,6 @@ public class Evaluate {
             Symbol.NonTerminal nonTerminal
     ) {
         Either<ConsumedExpression, String> evaluated = applied;
-        System.out.println("Grow Left Recursion called");
         int lastPosition = currentPosition;
         while (true) {
             Either<ConsumedExpression, String> evaluatedNonTerminal = evaluateNonterminal(
@@ -129,7 +128,6 @@ public class Evaluate {
                     var consumedExpression
             )) {
                 if (consumedExpression.parsePosition() <= lastPosition) {
-                    System.out.println("Grow left recursion exited" + consumedExpression.parsePosition());
                     return Objects.requireNonNullElse(
                             evaluated, evaluatedNonTerminal
                     );
@@ -142,7 +140,6 @@ public class Evaluate {
             }
         }
     }
-
 
     private static Either<ConsumedExpression, String> evaluateNonterminal(
             Symbol.NonTerminal nonTerminal,
