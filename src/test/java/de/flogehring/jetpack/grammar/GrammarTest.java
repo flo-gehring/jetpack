@@ -104,7 +104,7 @@ public class GrammarTest {
     }
 
     @Nested
-    class LeftRecursionTests {
+    class DirectLeftRecursion {
 
         Grammar grammar = new Grammar(
                 "expr",
@@ -181,6 +181,36 @@ public class GrammarTest {
                     "1-1"
             );
             assertTrue(b);
+        }
+    }
+
+    @Nested
+    class IndirectLeftRecursion {
+
+        Grammar grammar = new Grammar(
+                "x",
+                Map.of(
+                        "x", Expression.nonTerminal("expr"),
+                        "expr", Expression.orderedChoice(
+                                Expression.sequence(Expression.nonTerminal("x"), Expression.sequence(Expression.terminal("-"), Expression.nonTerminal("num"))
+                                ),
+                                Expression.nonTerminal("num")
+                        ),
+                        "num", Expression.terminal("[0-9]+")
+                )
+        );
+
+        @ParameterizedTest
+        @CsvSource(
+                value = {
+                        "double, 1 -1,true",
+                        "Triple,1 - 1 -1,true"
+                }
+        )
+        @Timeout(1)
+        void test(String message, String expr, boolean expected) {
+            boolean actual = grammar.fitsGrammar(expr);
+            assertEquals(expected, actual, message);
         }
     }
 }

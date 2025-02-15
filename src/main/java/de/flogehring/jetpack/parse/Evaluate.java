@@ -11,40 +11,84 @@ import static de.flogehring.jetpack.parse.EvaluateTerminal.applyTerminal;
 
 public class Evaluate {
 
-    public static Either<ConsumedExpression, String> applyRule(
+    public static Either<ConsumedExpression, String> evaluate(
+            Input input,
+            String startingRule,
+            Function<Symbol.NonTerminal, Expression> grammar
+    ) {
+        return applyRule(
+                Expression.nonTerminal(startingRule),
+                input,
+                0,
+                grammar,
+                MemoTable.of(),
+                Heads.of(),
+                Stack.empty()
+        );
+    }
+
+    private static Either<ConsumedExpression, String> applyRule(
             Expression expression,
             Input input,
             int currentPosition,
             Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+            MemoTable memoTable,
+            Heads heads,
+            Stack<Symbol.NonTerminal> ruleInvocationStack
     ) {
         return switch (expression) {
             case Operator op -> applyOperator(
                     op,
                     input,
                     currentPosition,
-                    createEvaluatorWithApplyRule(grammar, memoTable)
+                    createEvaluatorWithApplyRule(grammar, memoTable, heads, ruleInvocationStack)
             );
             case Symbol sym -> applySymbol(
                     sym,
                     input,
                     currentPosition,
                     grammar,
-                    memoTable
+                    memoTable,
+                    heads,
+                    ruleInvocationStack
             );
         };
     }
 
-    private static ExpressionEvaluator createEvaluatorWithApplyRule(Function<Symbol.NonTerminal, Expression> grammar, MemoTable memoTable) {
-        return (expression, input, currentPosition) ->
-                applyRule(expression, input, currentPosition, grammar, memoTable);
+    private static ExpressionEvaluator createEvaluatorWithApplyRule(
+            Function<Symbol.NonTerminal, Expression> grammar,
+            MemoTable memoTable,
+            Heads heads, Stack<Symbol.NonTerminal> ruleInvocationStack) {
+        return (expression, input, currentPosition) -> applyRule(
+                expression,
+                input,
+                currentPosition,
+                grammar,
+                memoTable,
+                heads,
+                ruleInvocationStack
+        );
     }
 
-    private static Either<ConsumedExpression, String> applySymbol(Symbol symbol, Input input, int currentPosition, Function<Symbol.NonTerminal, Expression> grammar, MemoTable memoTable) {
+    private static Either<ConsumedExpression, String> applySymbol(
+            Symbol symbol,
+            Input input,
+            int currentPosition, Function<Symbol.NonTerminal, Expression> grammar,
+            MemoTable memoTable,
+            Heads heads,
+            Stack<Symbol.NonTerminal> ruleInvocationStack
+    ) {
         return switch (symbol) {
             case Symbol.Terminal(var t) -> applyTerminal(t, input, currentPosition);
-            case Symbol.NonTerminal nonTerminal ->
-                    applyNonterminal(input, currentPosition, grammar, memoTable, nonTerminal);
+            case Symbol.NonTerminal nonTerminal -> applyNonterminal(
+                    input,
+                    currentPosition,
+                    grammar,
+                    memoTable,
+                    nonTerminal,
+                    heads,
+                    ruleInvocationStack
+            );
         };
     }
 
@@ -53,19 +97,22 @@ public class Evaluate {
             int currentPosition,
             Function<Symbol.NonTerminal, Expression> grammar,
             MemoTable memoTable,
-            Symbol.NonTerminal nonTerminal
+            Symbol.NonTerminal nonTerminal,
+            Heads heads,
+            Stack<Symbol.NonTerminal> ruleInvocationStack
     ) {
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        return switch (memoTable.get(key)) {
+        MemoTableLookup recall = recall(input, heads, memoTable, nonTerminal, currentPosition, grammar, ruleInvocationStack);
+        return switch (recall) {
             case MemoTableLookup.NoHit() ->
-                    tryParseNonterminal(input, currentPosition, grammar, memoTable, nonTerminal);
+                    tryParseNonterminal(input, currentPosition, grammar, memoTable, nonTerminal,heads, ruleInvocationStack);
             case MemoTableLookup.LeftRecursion(boolean _) -> {
                 if (memoTable.getInGrowLeftRecursion(key) && memoTable.getLookupIgnoreLeftRecursion(key) instanceof MemoTableLookup.Success(
                         var consumed
                 )) {
                     yield Either.ofThis(new ConsumedExpression(consumed));
                 } else {
-                    memoTable.setLeftRecursionDetected(key, true);
+                    //memoTable.setLeftRecursionDetected(key, true);
                     yield Either.or("Left Recursion detected");
                 }
             }
@@ -74,17 +121,85 @@ public class Evaluate {
         };
     }
 
+    private static MemoTableLookup recall(
+            Input input,
+            Heads heads,
+            MemoTable memoTable,
+            Symbol.NonTerminal rule,
+            int position,
+            Function<Symbol.NonTerminal, Expression> grammar,
+            Stack<Symbol.NonTerminal> ruleInvocationStack
+
+    ) {
+        String name = rule.name();
+        MemoTableKey memoTableKey = new MemoTableKey(name, position);
+        var lookup = memoTable.get(memoTableKey);
+        return heads.get(position).map(
+                head -> recallWithHead(
+                        input,
+                        memoTable,
+                        rule,
+                        position,
+                        grammar,
+                        head,
+                        lookup,
+                        name,
+                        heads,
+                        ruleInvocationStack
+                )
+        ).orElse(lookup);
+    }
+
+    private static MemoTableLookup recallWithHead(
+            Input input,
+            MemoTable memoTable,
+            Symbol.NonTerminal rule,
+            int position,
+            Function<Symbol.NonTerminal, Expression> grammar,
+            Heads.Head head,
+            MemoTableLookup lookup,
+            String name,
+            Heads heads,
+            Stack<Symbol.NonTerminal> ruleInvocationStack
+    ) {
+        if (lookup instanceof MemoTableLookup.NoHit && !head.associated(name)) {
+            return new MemoTableLookup.PreviousParsingFailure();
+        } else if (head.inEvaluationSet(name)) {
+            head.popEval(name);
+            Either<ConsumedExpression, String> consumedExpressionStringEither = evaluateNonterminal(
+                    rule,
+                    input,
+                    position,
+                    grammar,
+                    memoTable,
+                    heads,
+                    ruleInvocationStack
+            );
+            if (consumedExpressionStringEither instanceof Either.This<ConsumedExpression, String>(
+                    var consumedExpression
+            )) {
+                return new MemoTableLookup.Success(consumedExpression.parsePosition());
+            } else {
+                return new MemoTableLookup.PreviousParsingFailure();
+            }
+        } else {
+            return lookup;
+        }
+    }
+
     private static Either<ConsumedExpression, String> tryParseNonterminal(
             Input input,
             int currentPosition,
             Function<Symbol.NonTerminal, Expression> grammar,
             MemoTable memoTable,
-            Symbol.NonTerminal nonTerminal
+            Symbol.NonTerminal nonTerminal,
+            Heads heads,
+            Stack<Symbol.NonTerminal> ruleInvocationStack
     ) {
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        memoTable.setLeftRecursionDetected(key, false);
+        // memoTable.setLeftRecursionDetected(key, false);
         Either<ConsumedExpression, String> applied = applyNonterminalWithoutLookup(
-                input, currentPosition, grammar, memoTable, nonTerminal
+                input, currentPosition, grammar, memoTable, nonTerminal, heads, ruleInvocationStack
         );
         boolean detected = memoTable.getLeftRecursion(key);
         if (detected && applied instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
@@ -92,7 +207,7 @@ public class Evaluate {
             memoTable.insertSuccess(key, consumedExpression.parsePosition());
             memoTable.setInGrowLeftRecursion(key);
             applied = growLeftRecursion(
-                    applied, input, currentPosition, grammar, memoTable, nonTerminal
+                    applied, input, currentPosition, grammar, memoTable, nonTerminal, heads, ruleInvocationStack
             );
             memoTable.removeInGrowLeftRecursion(key);
             memoTable.removeLeftRecursion(key);
@@ -106,7 +221,9 @@ public class Evaluate {
             int currentPosition,
             Function<Symbol.NonTerminal, Expression> grammar,
             MemoTable memoTable,
-            Symbol.NonTerminal nonTerminal
+            Symbol.NonTerminal nonTerminal,
+            Heads heads,
+            Stack<Symbol.NonTerminal> ruleInvocationStack
     ) {
         Either<ConsumedExpression, String> evaluated = applied;
         int lastPosition = currentPosition;
@@ -116,7 +233,9 @@ public class Evaluate {
                     input,
                     currentPosition,
                     grammar,
-                    memoTable
+                    memoTable,
+                    heads,
+                    ruleInvocationStack
             );
             if (evaluatedNonTerminal instanceof Either.This<ConsumedExpression, String>(
                     var consumedExpression
@@ -140,10 +259,12 @@ public class Evaluate {
             Input input,
             int currentPosition,
             Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+            MemoTable memoTable,
+            Heads heads,
+            Stack<Symbol.NonTerminal> ruleInvocationStack
     ) {
         Expression expression = grammar.apply(nonTerminal);
-        return applyRule(expression, input, currentPosition, grammar, memoTable);
+        return applyRule(expression, input, currentPosition, grammar, memoTable, heads, ruleInvocationStack);
     }
 
     private static Either<ConsumedExpression, String> applyNonterminalWithoutLookup(
@@ -151,7 +272,9 @@ public class Evaluate {
             int currentPosition,
             Function<Symbol.NonTerminal, Expression> grammar,
             MemoTable memoTable,
-            Symbol.NonTerminal nonTerminal
+            Symbol.NonTerminal nonTerminal,
+            Heads heads,
+            Stack<Symbol.NonTerminal> ruleInvocationStack
     ) {
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
         Either<ConsumedExpression, String> consumedInput = applyRule(
@@ -159,7 +282,9 @@ public class Evaluate {
                 input,
                 currentPosition,
                 grammar,
-                memoTable
+                memoTable,
+                heads,
+                ruleInvocationStack
         );
         if (consumedInput instanceof Either.This<ConsumedExpression, String>(var success)) {
             memoTable.insertSuccess(key, success.parsePosition());

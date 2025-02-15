@@ -34,13 +34,10 @@ public class Grammar {
 
     public boolean fitsGrammar(String s) {
         Input input = Input.of(s, "\\s");
-        MemoTable memoTable = MemoTable.of();
-        Either<ConsumedExpression, String> consume = Evaluate.applyRule(
-                Expression.nonTerminal(startingRules),
+        Either<ConsumedExpression, String> consume = Evaluate.evaluate(
                 input,
-                0,
-                nonTerminal -> Objects.requireNonNull(rules.get(nonTerminal.name())),
-                memoTable
+                startingRules,
+                nonTerminal -> Objects.requireNonNull(rules.get(nonTerminal.name()))
         );
         if (consume instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
             return consumedExpression.parsePosition() == input.length();

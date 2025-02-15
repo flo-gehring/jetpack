@@ -24,10 +24,6 @@ public class LookupTable {
         lookup.put(key, offset);
     }
 
-    public void initRuleDescent(MemoTableKey key) {
-        lookup.put(key, -1);
-    }
-
     public void insertFailure(MemoTableKey key) {
         lookup.put(key, -1);
     }
@@ -44,7 +40,4 @@ public class LookupTable {
         return new MemoTableLookup.NoHit();
     }
 
-    public boolean containsKey(MemoTableKey key) {
-        return lookup.containsKey(key);
-    }
 }

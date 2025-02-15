@@ -1,12 +1,17 @@
 package de.flogehring.jetpack.parse;
 
+import de.flogehring.jetpack.grammar.ConsumedExpression;
+import de.flogehring.jetpack.grammar.Operator;
+import de.flogehring.jetpack.grammar.Symbol;
+
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.Optional;
 
 public class MemoTable {
 
     private final LookupTable lookup;
-    private final HashMap<MemoTableKey, Boolean> leftRecursion;
+    private final HashMap<MemoTableKey, MemoTableLookup.LeftRecursion> leftRecursion;
     private final HashMap<MemoTableKey, Boolean> inGrowLeftRecursion;
 
     private MemoTable() {
@@ -29,13 +34,24 @@ public class MemoTable {
 
     public MemoTableLookup get(MemoTableKey key) {
         if (leftRecursion.containsKey(key)) {
-            return new MemoTableLookup.LeftRecursion(leftRecursion.get(key));
+            return leftRecursion.get(key);
         }
         return lookup.get(key);
     }
 
-    public void setLeftRecursionDetected(MemoTableKey key, boolean detected) {
-        leftRecursion.put(key, detected);
+    public void setLeftRecursionDetected(
+            MemoTableKey key,
+            ConsumedExpression seed,
+            Symbol.NonTerminal rule,
+            Heads.Head head,
+            Optional<MemoTableLookup.LeftRecursion> next
+            ) {
+        leftRecursion.put(key, new MemoTableLookup.LeftRecursion(
+                seed,
+                rule,
+                head,
+                next
+        ));
     }
 
     public boolean getInGrowLeftRecursion(MemoTableKey key) {
@@ -43,7 +59,7 @@ public class MemoTable {
     }
 
     public void setInGrowLeftRecursion(MemoTableKey key) {
-         inGrowLeftRecursion.put(key, true);
+        inGrowLeftRecursion.put(key, true);
     }
 
     public boolean getLeftRecursion(MemoTableKey key) {

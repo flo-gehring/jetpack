@@ -31,8 +31,22 @@ public class Heads {
         heads.remove(position);
     }
 
-    public record Head(String rule, Set<String> rules) {
+    public record Head(
+            String headRule,
+            Set<String> involvedSet,
+            Set<String> evalSet
+    ) {
 
+        public boolean associated(String name) {
+            return headRule.equals(name) || involvedSet.stream().anyMatch(name::equals);
+        }
+
+        public boolean inEvaluationSet(String name) {
+            return evalSet.contains(name);
+        }
+
+        public void popEval(String name) {
+            evalSet.remove(name);
+        }
     }
-
 }
