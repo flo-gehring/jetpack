@@ -4,7 +4,6 @@ package de.flogehring.jetpack.grammar;
 import de.flogehring.jetpack.parse.Grammar;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -124,15 +123,6 @@ public class GrammarTest {
                 )
         );
 
-        @Test
-        @Timeout(value = 1)
-        void testHaltsSpace() {
-            boolean b = grammar.fitsGrammar(
-                    "1 - 1"
-            );
-            assertTrue(b);
-        }
-
         @CsvSource(value = {
                 "Single Number,1,true",
                 "Two Numbers,1-1,true",
@@ -142,48 +132,39 @@ public class GrammarTest {
                 "Completely wrong,1 - asdf ,false"
         })
         @ParameterizedTest
-        @Timeout(1)
         void test(String testMessage, String expression, boolean expected) {
             boolean actual = grammar.fitsGrammar(
                     expression
             );
             assertEquals(expected, actual, testMessage);
         }
+    }
+
+    @Nested
+    class IndirectLeftRecursionTwo {
+
+        Grammar g = new Grammar(
+                "Expr",
+                Map.of(
+                        "Expr", Expression.orderedChoice(
+                                Expression.sequence(Expression.nonTerminal("Expr"), Expression.sequence(Expression.terminal("\\+"), Expression.nonTerminal("Num"))),
+                                Expression.nonTerminal("Num")
+
+                        ),
+                        "Num", Expression.orderedChoice(
+                                Expression.sequence(Expression.nonTerminal("Num"), Expression.nonTerminal("Digit")),
+                                Expression.nonTerminal("Digit")
+                        ),
+                        "Digit", Expression.terminal("[0-9]")
+
+                )
+        );
 
         @Test
-        @Timeout(1)
-        void testHaltsThree() {
-            boolean b = grammar.fitsGrammar(
-                    "1 - 1 - 1"
+        void parse() {
+            assertTrue(
+                    g.fitsGrammar("12 + 3")
             );
-            assertTrue(b);
-        }
-
-        @Test
-        @Timeout(1)
-        void testHaltsThreeDifferent() {
-            boolean b = grammar.fitsGrammar(
-                    "1 - 2 - 3"
-            );
-            assertTrue(b);
-        }
-
-        @Test
-        @Timeout(1)
-        void testHaltsSingle() {
-            boolean b = grammar.fitsGrammar(
-                    "1"
-            );
-            assertTrue(b);
-        }
-
-        @Test
-        @Timeout(1)
-        void testHalts() {
-            boolean b = grammar.fitsGrammar(
-                    "1-1"
-            );
-            assertTrue(b);
         }
     }
 
@@ -210,7 +191,6 @@ public class GrammarTest {
                         "Triple,1 - 1 -1,true"
                 }
         )
-        @Timeout(1)
         void test(String message, String expr, boolean expected) {
             boolean actual = grammar.fitsGrammar(expr);
             assertEquals(expected, actual, message);

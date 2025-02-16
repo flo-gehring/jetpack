@@ -40,6 +40,7 @@ public class Grammar {
                 nonTerminal -> Objects.requireNonNull(rules.get(nonTerminal.name()))
         );
         if (consume instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
+            System.out.println("Only matched " + consumedExpression.parsePosition() + " of " + input.length() + " characters");
             return consumedExpression.parsePosition() == input.length();
         } else {
             return false;

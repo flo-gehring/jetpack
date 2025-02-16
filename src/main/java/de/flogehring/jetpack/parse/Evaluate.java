@@ -16,6 +16,7 @@ public class Evaluate {
             String startingRule,
             Function<Symbol.NonTerminal, Expression> grammar
     ) {
+        System.out.println("Evaluate called");
         return evaluateExpression(
                 Expression.nonTerminal(startingRule),
                 input,
@@ -74,13 +75,13 @@ public class Evaluate {
             ParsingState parsingState,
             Symbol.NonTerminal nonTerminal
     ) {
-        MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
+        final MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
         final LookupTable lookupTable = parsingState.getLookup();
-        MemoTableLookup lookup = lookupTable.get(key);
-        Stack<Symbol.NonTerminal> callStack = parsingState.getCallStack();
-        boolean ruleOnCallStack = callStack.search(nonTerminal) != -1;
+        final MemoTableLookup lookup = lookupTable.get(key);
+        final Stack<Symbol.NonTerminal> callStack = parsingState.getCallStack();
         boolean memoTableHit = !(lookup instanceof MemoTableLookup.NoHit);
-        if (memoTableHit && ruleOnCallStack) {
+        if (memoTableHit && callStack.search(nonTerminal) != -1) {
+            System.out.println("Skipping update memo with rule " + nonTerminal.name());
             return switch (lookup) {
                 case MemoTableLookup.Success(var consumed) -> Either.ofThis(new ConsumedExpression(consumed));
                 case MemoTableLookup.Fail() -> Either.or("Previous Parsing Failure");
@@ -107,7 +108,6 @@ public class Evaluate {
         if (lookup instanceof MemoTableLookup.NoHit) {
             memoTable.insertFailure(key);
         }
-        lookup = memoTable.get(key);
         Expression ruleDef = grammar.apply(nonTerminal);
         var ans = evaluateExpression(ruleDef, input, currentPosition, grammar, parsingState);
         if (ans instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
@@ -119,7 +119,14 @@ public class Evaluate {
             memoTable.insertFailure(key);
         }
         parsingState.getCallStack().pop();
-        if (parsingState.isGrowState() && parsingState.getCallStack().search(nonTerminal) != -1) {
+        System.out.println("Rule " + nonTerminal.name());
+        System.out.println(
+                "Stack: " + String.join(", ", parsingState.getCallStack().stream().map(Symbol.NonTerminal::name).toList())
+        );
+        System.out.println("---");
+
+        if (!parsingState.isGrowState()
+                && parsingState.getCallStack().empty()) {
             while (true) {
                 ans = growLr(
                         nonTerminal, input, currentPosition, grammar, parsingState
@@ -142,6 +149,7 @@ public class Evaluate {
             Function<Symbol.NonTerminal, Expression> grammar,
             ParsingState parsingState
     ) {
+        System.out.println("Grow Lr called");
         parsingState.getCallStack().push(nonTerminal);
         parsingState.setGrowState(true);
         Expression exp = grammar.apply(nonTerminal);
