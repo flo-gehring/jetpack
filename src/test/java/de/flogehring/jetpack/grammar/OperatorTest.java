@@ -4,20 +4,13 @@ import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.parse.EvaluateOperators;
 import de.flogehring.jetpack.parse.EvaluateTerminal;
 import de.flogehring.jetpack.parse.ExpressionEvaluator;
-import de.flogehring.jetpack.parse.MemoTable;
+import de.flogehring.jetpack.parse.ParsingState;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 public class OperatorTest {
-
-    MemoTable memoTable;
-
-    @BeforeEach
-    void beforeEach() {
-        memoTable = MemoTable.of();
-    }
 
     @Nested
     class StarTest {

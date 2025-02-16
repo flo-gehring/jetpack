@@ -20,7 +20,7 @@ public class Evaluate {
                 input,
                 0,
                 grammar,
-                MemoTable.of()
+                ParsingState.of()
         );
     }
 
@@ -29,21 +29,21 @@ public class Evaluate {
             Input input,
             int currentPosition,
             Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+            ParsingState parsingState
     ) {
         return switch (expression) {
             case Operator op -> applyOperator(
                     op,
                     input,
                     currentPosition,
-                    createEvaluatorWithApplyRule(grammar, memoTable)
+                    createEvaluatorWithApplyRule(grammar, parsingState)
             );
             case Symbol sym -> applySymbol(
                     sym,
                     input,
                     currentPosition,
                     grammar,
-                    memoTable
+                    parsingState
             );
         };
     }
@@ -52,7 +52,7 @@ public class Evaluate {
             Symbol symbol,
             Input input,
             int currentPosition, Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+            ParsingState parsingState
     ) {
         return switch (symbol) {
             case Symbol.Terminal(var t) -> applyTerminal(t, input, currentPosition);
@@ -60,7 +60,7 @@ public class Evaluate {
                     input,
                     currentPosition,
                     grammar,
-                    memoTable,
+                    parsingState,
                     nonTerminal
             );
         };
@@ -70,20 +70,18 @@ public class Evaluate {
             Input input,
             int currentPosition,
             Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable,
+            ParsingState parsingState,
             Symbol.NonTerminal nonTerminal
     ) {
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        var lookup = memoTable.lookup(key);
+        var lookup = parsingState.lookup(key);
         return switch (lookup) {
             case MemoTableLookup.NoHit() -> {
                 Expression ruleDef = grammar.apply(nonTerminal);
-                var ans = evaluateExpression(ruleDef, input, currentPosition, grammar, memoTable);
+                var ans = evaluateExpression(ruleDef, input, currentPosition, grammar, parsingState);
                 switch (ans) {
-                    case Either.This<ConsumedExpression, String>(var consumed) -> {
-                        memoTable.insertSuccess(key, consumed.parsePosition());
-                    }
-                    case Either.Or<ConsumedExpression, String> _ -> memoTable.insertFailure(key);
+                    case Either.This<ConsumedExpression, String>(var consumed) -> parsingState.getLookup().insertSuccess(key, consumed.parsePosition());
+                    case Either.Or<ConsumedExpression, String> _ -> parsingState.getLookup().insertFailure(key);
                 }
                 yield ans;
             }
@@ -94,14 +92,14 @@ public class Evaluate {
 
     private static ExpressionEvaluator createEvaluatorWithApplyRule(
             Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
+            ParsingState parsingState
     ) {
         return (expression, input, currentPosition) -> evaluateExpression(
                 expression,
                 input,
                 currentPosition,
                 grammar,
-                memoTable
+                parsingState
         );
     }
 
