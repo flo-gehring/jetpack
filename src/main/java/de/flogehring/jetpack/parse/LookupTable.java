@@ -32,7 +32,7 @@ public class LookupTable {
         if (lookup.containsKey(key)) {
             int offset = lookup.get(key);
             if (offset == -1) {
-                return new MemoTableLookup.PreviousParsingFailure();
+                return new MemoTableLookup.Fail();
             }
             return new MemoTableLookup.Success(offset);
 

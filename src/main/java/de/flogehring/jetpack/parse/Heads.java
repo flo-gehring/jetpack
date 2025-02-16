@@ -31,6 +31,10 @@ public class Heads {
         heads.remove(position);
     }
 
+    public void put(int currentPosition, Head head) {
+        heads.put(currentPosition, head);
+    }
+
     public record Head(
             String headRule,
             Set<String> involvedSet,
@@ -47,6 +51,12 @@ public class Heads {
 
         public void popEval(String name) {
             evalSet.remove(name);
+        }
+
+        public void setEvalSet(Set<String> involvedSet) {
+            evalSet.clear();
+            evalSet.addAll(involvedSet);
+
         }
     }
 }

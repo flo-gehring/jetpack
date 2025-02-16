@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GrammarTest {
 
-
     @Nested
     class MathGrammarTests {
 
@@ -152,6 +151,7 @@ public class GrammarTest {
         }
 
         @Test
+        @Timeout(1)
         void testHaltsThree() {
             boolean b = grammar.fitsGrammar(
                     "1 - 1 - 1"
@@ -160,6 +160,7 @@ public class GrammarTest {
         }
 
         @Test
+        @Timeout(1)
         void testHaltsThreeDifferent() {
             boolean b = grammar.fitsGrammar(
                     "1 - 2 - 3"
@@ -168,6 +169,7 @@ public class GrammarTest {
         }
 
         @Test
+        @Timeout(1)
         void testHaltsSingle() {
             boolean b = grammar.fitsGrammar(
                     "1"
@@ -176,6 +178,7 @@ public class GrammarTest {
         }
 
         @Test
+        @Timeout(1)
         void testHalts() {
             boolean b = grammar.fitsGrammar(
                     "1-1"

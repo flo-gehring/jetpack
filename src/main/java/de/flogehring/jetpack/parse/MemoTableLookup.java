@@ -18,7 +18,7 @@ public sealed interface MemoTableLookup {
     ) implements MemoTableLookup {
     }
 
-    record PreviousParsingFailure() implements MemoTableLookup {
+    record Fail() implements MemoTableLookup {
     }
 
     record Success(int offset) implements MemoTableLookup {

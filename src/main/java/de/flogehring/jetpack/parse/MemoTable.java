@@ -1,7 +1,6 @@
 package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.grammar.ConsumedExpression;
-import de.flogehring.jetpack.grammar.Operator;
 import de.flogehring.jetpack.grammar.Symbol;
 
 import java.util.HashMap;
@@ -39,7 +38,7 @@ public class MemoTable {
         return lookup.get(key);
     }
 
-    public void setLeftRecursionDetected(
+    public void setLeftRecursion(
             MemoTableKey key,
             ConsumedExpression seed,
             Symbol.NonTerminal rule,
@@ -54,26 +53,9 @@ public class MemoTable {
         ));
     }
 
-    public boolean getInGrowLeftRecursion(MemoTableKey key) {
-        return inGrowLeftRecursion.getOrDefault(key, false);
-    }
-
-    public void setInGrowLeftRecursion(MemoTableKey key) {
-        inGrowLeftRecursion.put(key, true);
-    }
-
-    public boolean getLeftRecursion(MemoTableKey key) {
-        return Objects.requireNonNullElse(leftRecursion.get(key), false);
-    }
-
     public void removeLeftRecursion(MemoTableKey key) {
         leftRecursion.remove(key);
     }
-
-    public MemoTableLookup getLookupIgnoreLeftRecursion(MemoTableKey key) {
-        return lookup.get(key);
-    }
-
     public void removeInGrowLeftRecursion(MemoTableKey key) {
         inGrowLeftRecursion.remove(key);
     }
