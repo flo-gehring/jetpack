@@ -6,26 +6,19 @@ import lombok.Setter;
 
 import java.util.Stack;
 
+@Getter
 public class ParsingState {
 
     @Setter
-    @Getter
     private int maxPos;
-    @Getter
-    private Stack<Symbol.NonTerminal> callStack;
-    @Getter
+    private final Stack<Symbol.NonTerminal> callStack;
     @Setter
     private boolean growState;
-    @Getter
-    private final LookupTable lookup;
+    private final MemoTable lookup;
 
     private ParsingState() {
-        lookup = LookupTable.of();
+        lookup = MemoTable.of();
         callStack = new Stack<>();
-    }
-
-    public MemoTableLookup lookup(MemoTableKey key) {
-        return lookup.get(key);
     }
 
     public static ParsingState of() {

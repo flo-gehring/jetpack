@@ -4,16 +4,16 @@ import de.flogehring.jetpack.util.Check;
 
 import java.util.HashMap;
 
-public class LookupTable {
+public class MemoTable {
 
     private final HashMap<MemoTableKey, Integer> lookup;
 
-    private LookupTable() {
+    private MemoTable() {
         lookup = new HashMap<>();
     }
 
-    public static LookupTable of() {
-        return new LookupTable();
+    public static MemoTable of() {
+        return new MemoTable();
     }
 
     public void insertSuccess(MemoTableKey key, int offset) {
@@ -39,5 +39,4 @@ public class LookupTable {
         }
         return new MemoTableLookup.NoHit();
     }
-
 }

@@ -75,8 +75,8 @@ public class Evaluate {
             Symbol.NonTerminal nonTerminal
     ) {
         final MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        final LookupTable lookupTable = parsingState.getLookup();
-        final MemoTableLookup lookup = lookupTable.get(key);
+        final MemoTable memoTable = parsingState.getLookup();
+        final MemoTableLookup lookup = memoTable.get(key);
         final Stack<Symbol.NonTerminal> callStack = parsingState.getCallStack();
         boolean memoTableHit = !(lookup instanceof MemoTableLookup.NoHit);
         if (memoTableHit && callStack.search(nonTerminal) != -1) {
@@ -89,7 +89,6 @@ public class Evaluate {
         return updateMemo(
                 nonTerminal, input, currentPosition, grammar, parsingState
         );
-
     }
 
     private static Either<ConsumedExpression, String> updateMemo(
@@ -100,7 +99,7 @@ public class Evaluate {
             ParsingState parsingState
     ) {
         parsingState.getCallStack().push(nonTerminal);
-        LookupTable memoTable = parsingState.getLookup();
+        MemoTable memoTable = parsingState.getLookup();
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
         MemoTableLookup lookup = memoTable.get(key);
         if (lookup instanceof MemoTableLookup.NoHit) {
