@@ -10,10 +10,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-@Timeout(5)
 public class GrammarTest {
 
     @Nested
@@ -124,6 +122,16 @@ public class GrammarTest {
                         "num", Expression.terminal("[0-9]+")
                 )
         );
+
+
+        @Test
+        @Timeout(1)
+        void testDoesNotMatchTimeout() {
+            boolean actual = grammar.fitsGrammar(
+                    "1 -"
+            );
+            assertFalse(actual, "Does not Match missing num at the end");
+        }
 
         @CsvSource(value = {
                 "Single Number,1,true",

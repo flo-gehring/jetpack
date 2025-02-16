@@ -110,11 +110,13 @@ public class Evaluate {
         }
         Expression ruleDef = grammar.apply(nonTerminal);
         var ans = evaluateExpression(ruleDef, input, currentPosition, grammar, parsingState);
+        int position = currentPosition;
         if (ans instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
             if (parsingState.getMaxPos() < consumedExpression.parsePosition()) {
                 parsingState.setMaxPos(consumedExpression.parsePosition());
             }
             memoTable.insertSuccess(key, consumedExpression.parsePosition());
+            position = consumedExpression.parsePosition();
         } else {
             memoTable.insertFailure(key);
         }
@@ -126,16 +128,22 @@ public class Evaluate {
         System.out.println("---");
 
         if (!parsingState.isGrowState()
-                && parsingState.getCallStack().empty()) {
+                && parsingState.getCallStack().empty()
+                && position < input.length()
+        ) {
             while (true) {
                 ans = growLr(
                         nonTerminal, input, currentPosition, grammar, parsingState
                 );
-                if (ans instanceof Either.Or<ConsumedExpression, String> ||
-                        (ans instanceof Either.This<ConsumedExpression, String>(
-                                var consumedExpression
-                        ) && consumedExpression.parsePosition() >= input.length())) {
+                if (ans instanceof Either.Or<ConsumedExpression, String>) {
                     break;
+                }
+                if (ans instanceof Either.This<ConsumedExpression, String>(
+                        var consumedExpression
+                )) {
+                    if (consumedExpression.parsePosition() >= input.length()) break;
+                    if (position >= parsingState.getMaxPos()) break;
+                    position = consumedExpression.parsePosition();
                 }
             }
         }
