@@ -1,7 +1,7 @@
 package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.datatypes.Either;
-import de.flogehring.jetpack.parse.MemoTable;
+import de.flogehring.jetpack.parse.EvaluateTerminal;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -29,19 +29,17 @@ public class SymbolTest {
                 int initialOffset,
                 int expectedOffsetConsumed
         ) {
-            Symbol t = Symbol.terminal(symbol);
-            Either<ConsumedExpression, RuntimeException> consume = t.consume(
-                    Input.of(
+            Either<ConsumedExpression, String> consume = EvaluateTerminal.applyTerminal(
+                    symbol, Input.of(
                             inputString,
                             "\\s"
-                    ), initialOffset,
-                    GrammarTestUtil.emptyGrammar(),
-                    MemoTable.of()
+                    ), initialOffset
             );
-            if (consume instanceof Either.This<ConsumedExpression, RuntimeException> actual) {
+
+            if (consume instanceof Either.This<ConsumedExpression, String> actual) {
                 assertEquals(expectedOffsetConsumed, actual.get().parsePosition(), testMessage);
             } else {
-                fail("Failed to parse: " + testMessage, consume.getOr());
+                fail("Failed to parse: " + testMessage, new RuntimeException(consume.getOr()));
             }
         }
     }

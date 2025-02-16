@@ -1,18 +1,18 @@
 package de.flogehring.jetpack.grammar;
 
 
+import de.flogehring.jetpack.parse.Grammar;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GrammarTest {
-
 
     @Nested
     class MathGrammarTests {
@@ -99,5 +99,112 @@ public class GrammarTest {
                         )
                 )
         );
+    }
+
+    @Nested
+    class DirectLeftRecursion {
+
+        Grammar grammar = new Grammar(
+                "expr",
+                Map.of(
+                        "expr", Expression.orderedChoice(
+                                Expression.sequence(
+                                        Expression.nonTerminal(
+                                                "expr"
+                                        ),
+                                        Expression.sequence(
+                                                Expression.terminal("-"),
+                                                Expression.nonTerminal("num")
+                                        )
+                                ),
+                                Expression.nonTerminal("num")
+                        ),
+                        "num", Expression.terminal("[0-9]+")
+                )
+        );
+
+
+        @Test
+        @Timeout(1)
+        void testDoesNotMatchTimeout() {
+            boolean actual = grammar.fitsGrammar(
+                    "1 -"
+            );
+            assertFalse(actual, "Does not Match missing num at the end");
+        }
+
+        @CsvSource(value = {
+                "Single Number,1,true",
+                "Two Numbers,1-1,true",
+                "Three Numbers,1-1-1,true",
+                "Multiple Different,1 - 1 -2 -3-4-1,true",
+                "Does not match because expr not completed,1 - ,false",
+                "Completely wrong,1 - asdf ,false"
+        })
+        @ParameterizedTest
+        @Timeout(5)
+        void test(String testMessage, String expression, boolean expected) {
+            boolean actual = grammar.fitsGrammar(
+                    expression
+            );
+            assertEquals(expected, actual, testMessage);
+        }
+    }
+
+    @Nested
+    class IndirectLeftRecursionTwo {
+
+        Grammar g = new Grammar(
+                "Expr",
+                Map.of(
+                        "Expr", Expression.orderedChoice(
+                                Expression.sequence(Expression.nonTerminal("Expr"), Expression.sequence(Expression.terminal("\\+"), Expression.nonTerminal("Num"))),
+                                Expression.nonTerminal("Num")
+
+                        ),
+                        "Num", Expression.orderedChoice(
+                                Expression.sequence(Expression.nonTerminal("Num"), Expression.nonTerminal("Digit")),
+                                Expression.nonTerminal("Digit")
+                        ),
+                        "Digit", Expression.terminal("[0-9]")
+
+                )
+        );
+
+        @Test
+        void parse() {
+            assertTrue(
+                    g.fitsGrammar("12 + 3")
+            );
+        }
+    }
+
+    @Nested
+    class IndirectLeftRecursion {
+
+        Grammar grammar = new Grammar(
+                "x",
+                Map.of(
+                        "x", Expression.nonTerminal("expr"),
+                        "expr", Expression.orderedChoice(
+                                Expression.sequence(Expression.nonTerminal("x"), Expression.sequence(Expression.terminal("-"), Expression.nonTerminal("num"))
+                                ),
+                                Expression.nonTerminal("num")
+                        ),
+                        "num", Expression.terminal("[0-9]+")
+                )
+        );
+
+        @ParameterizedTest
+        @CsvSource(
+                value = {
+                        "double, 1 -1,true",
+                        "Triple,1 - 1 -1,true"
+                }
+        )
+        void test(String message, String expr, boolean expected) {
+            boolean actual = grammar.fitsGrammar(expr);
+            assertEquals(expected, actual, message);
+        }
     }
 }

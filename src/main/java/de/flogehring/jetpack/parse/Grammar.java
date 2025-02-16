@@ -1,7 +1,9 @@
-package de.flogehring.jetpack.grammar;
+package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
-import de.flogehring.jetpack.parse.MemoTable;
+import de.flogehring.jetpack.grammar.ConsumedExpression;
+import de.flogehring.jetpack.grammar.Expression;
+import de.flogehring.jetpack.grammar.Input;
 import de.flogehring.jetpack.util.Check;
 
 import java.text.MessageFormat;
@@ -31,17 +33,14 @@ public class Grammar {
     }
 
     public boolean fitsGrammar(String s) {
-        Expression expression = rules.get(startingRules);
         Input input = Input.of(s, "\\s");
-        Either<ConsumedExpression, RuntimeException> consume = expression
-                .consume(input,
-                        0,
-                        nonTerminal -> Objects.requireNonNull(
-                                rules.get(nonTerminal.name())
-                        ),
-                        MemoTable.of()
-                );
-        if (consume instanceof Either.This<ConsumedExpression, RuntimeException>(var consumedExpression)) {
+        Either<ConsumedExpression, String> consume = Evaluate.evaluate(
+                input,
+                startingRules,
+                nonTerminal -> Objects.requireNonNull(rules.get(nonTerminal.name()))
+        );
+        if (consume instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
+            System.out.println("Only matched " + consumedExpression.parsePosition() + " of " + input.length() + " characters");
             return consumedExpression.parsePosition() == input.length();
         } else {
             return false;

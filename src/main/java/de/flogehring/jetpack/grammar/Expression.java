@@ -1,18 +1,6 @@
 package de.flogehring.jetpack.grammar;
 
-import de.flogehring.jetpack.datatypes.Either;
-import de.flogehring.jetpack.parse.MemoTable;
-
-import java.util.function.Function;
-
 public sealed interface Expression permits Symbol, Operator {
-
-    Either<ConsumedExpression, RuntimeException> consume(
-            Input input,
-            int currentPosition,
-            Function<Symbol.NonTerminal, Expression> grammar,
-            MemoTable memoTable
-    );
 
     static Expression nonTerminal(String symbol) {
         return new Symbol.NonTerminal(symbol);
