@@ -4,6 +4,7 @@ package de.flogehring.jetpack.grammar;
 import de.flogehring.jetpack.parse.Grammar;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -12,6 +13,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Timeout(5)
 public class GrammarTest {
 
     @Nested
@@ -132,6 +134,7 @@ public class GrammarTest {
                 "Completely wrong,1 - asdf ,false"
         })
         @ParameterizedTest
+        @Timeout(5)
         void test(String testMessage, String expression, boolean expected) {
             boolean actual = grammar.fitsGrammar(
                     expression
