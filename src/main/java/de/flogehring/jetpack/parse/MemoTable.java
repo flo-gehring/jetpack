@@ -10,13 +10,14 @@ import java.util.Optional;
 public class MemoTable {
 
     private final LookupTable lookup;
-    private final HashMap<MemoTableKey, MemoTableLookup.LeftRecursion> leftRecursion;
-    private final HashMap<MemoTableKey, Boolean> inGrowLeftRecursion;
+
 
     private MemoTable() {
         lookup = LookupTable.of();
-        leftRecursion = new HashMap<>();
-        inGrowLeftRecursion = new HashMap<>();
+    }
+
+    public MemoTableLookup lookup(MemoTableKey key) {
+        return lookup.get(key);
     }
 
     public static MemoTable of() {
@@ -29,34 +30,5 @@ public class MemoTable {
 
     public void insertFailure(MemoTableKey key) {
         lookup.insertFailure(key);
-    }
-
-    public MemoTableLookup get(MemoTableKey key) {
-        if (leftRecursion.containsKey(key)) {
-            return leftRecursion.get(key);
-        }
-        return lookup.get(key);
-    }
-
-    public void setLeftRecursion(
-            MemoTableKey key,
-            ConsumedExpression seed,
-            Symbol.NonTerminal rule,
-            Heads.Head head,
-            Optional<MemoTableLookup.LeftRecursion> next
-            ) {
-        leftRecursion.put(key, new MemoTableLookup.LeftRecursion(
-                seed,
-                rule,
-                head,
-                next
-        ));
-    }
-
-    public void removeLeftRecursion(MemoTableKey key) {
-        leftRecursion.remove(key);
-    }
-    public void removeInGrowLeftRecursion(MemoTableKey key) {
-        inGrowLeftRecursion.remove(key);
     }
 }
