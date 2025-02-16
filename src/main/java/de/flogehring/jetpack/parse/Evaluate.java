@@ -121,12 +121,6 @@ public class Evaluate {
             memoTable.insertFailure(key);
         }
         parsingState.getCallStack().pop();
-        System.out.println("Rule " + nonTerminal.name());
-        System.out.println(
-                "Stack: " + String.join(", ", parsingState.getCallStack().stream().map(Symbol.NonTerminal::name).toList())
-        );
-        System.out.println("---");
-
         if (!parsingState.isGrowState()
                 && parsingState.getCallStack().empty()
                 && position < input.length()
