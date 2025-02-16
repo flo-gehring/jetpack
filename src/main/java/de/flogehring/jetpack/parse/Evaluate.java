@@ -16,7 +16,6 @@ public class Evaluate {
             String startingRule,
             Function<Symbol.NonTerminal, Expression> grammar
     ) {
-        System.out.println("Evaluate called");
         return evaluateExpression(
                 Expression.nonTerminal(startingRule),
                 input,
@@ -81,7 +80,6 @@ public class Evaluate {
         final Stack<Symbol.NonTerminal> callStack = parsingState.getCallStack();
         boolean memoTableHit = !(lookup instanceof MemoTableLookup.NoHit);
         if (memoTableHit && callStack.search(nonTerminal) != -1) {
-            System.out.println("Skipping update memo with rule " + nonTerminal.name());
             return switch (lookup) {
                 case MemoTableLookup.Success(var consumed) -> Either.ofThis(new ConsumedExpression(consumed));
                 case MemoTableLookup.Fail() -> Either.or("Previous Parsing Failure");
@@ -151,7 +149,6 @@ public class Evaluate {
             Function<Symbol.NonTerminal, Expression> grammar,
             ParsingState parsingState
     ) {
-        System.out.println("Grow Lr called");
         parsingState.getCallStack().push(nonTerminal);
         parsingState.setGrowState(true);
         Expression exp = grammar.apply(nonTerminal);
