@@ -1,10 +1,7 @@
 package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.datatypes.Either;
-import de.flogehring.jetpack.parse.EvaluateOperators;
-import de.flogehring.jetpack.parse.EvaluateTerminal;
-import de.flogehring.jetpack.parse.ExpressionEvaluator;
-import de.flogehring.jetpack.parse.ParsingState;
+import de.flogehring.jetpack.parse.*;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -85,7 +82,7 @@ public class OperatorTest {
                     0,
                     createTerminalEvaluator()
             ).getEither();
-            assertEquals(consume.parsePosition(), 1);
+            assertEquals(1, consume.parsePosition());
         }
 
 
@@ -97,7 +94,7 @@ public class OperatorTest {
                     0,
                     createTerminalEvaluator()
             ).getEither();
-            assertEquals(consume.parsePosition(), 1);
+            assertEquals(1, consume.parsePosition());
         }
 
         @Test

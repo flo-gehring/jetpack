@@ -1,6 +1,7 @@
 package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
+import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.*;
 
 import java.util.Stack;
@@ -10,6 +11,10 @@ import static de.flogehring.jetpack.parse.EvaluateOperators.applyOperator;
 import static de.flogehring.jetpack.parse.EvaluateTerminal.applyTerminal;
 
 public class Evaluate {
+
+    private Evaluate() {
+
+    }
 
     public static Either<ConsumedExpression, String> evaluate(
             Input input,
@@ -81,7 +86,9 @@ public class Evaluate {
         boolean memoTableHit = !(lookup instanceof MemoTableLookup.NoHit);
         if (memoTableHit && callStack.search(nonTerminal) != -1) {
             return switch (lookup) {
-                case MemoTableLookup.Success(var consumed) -> Either.ofThis(new ConsumedExpression(consumed));
+                case MemoTableLookup.Success(var offset, var parseTree) -> Either.ofThis(
+                        new ConsumedExpression(offset, parseTree.getChildren())
+                );
                 case MemoTableLookup.Fail() -> Either.or("Previous Parsing Failure");
                 case MemoTableLookup.NoHit() -> throw new RuntimeException("Unreachable State");
             };
@@ -112,7 +119,10 @@ public class Evaluate {
             if (parsingState.getMaxPos() < consumedExpression.parsePosition()) {
                 parsingState.setMaxPos(consumedExpression.parsePosition());
             }
-            memoTable.insertSuccess(key, consumedExpression.parsePosition());
+            memoTable.insertSuccess(key,
+                    consumedExpression.parsePosition(),
+                    Node.of(nonTerminal, consumedExpression.parseTree())
+            );
             position = consumedExpression.parsePosition();
         } else {
             memoTable.insertFailure(key);
@@ -154,7 +164,11 @@ public class Evaluate {
         Either<ConsumedExpression, String> ans = evaluateExpression(exp, input, currentPosition, grammar, parsingState);
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
         if (ans instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
-            parsingState.getLookup().insertSuccess(key, consumedExpression.parsePosition());
+            parsingState.getLookup().insertSuccess(
+                    key,
+                    consumedExpression.parsePosition(),
+                    Node.of(nonTerminal, consumedExpression.parseTree())
+            );
             if (consumedExpression.parsePosition() <= currentPosition) {
                 ans = Either.or("No Progress made");
             }

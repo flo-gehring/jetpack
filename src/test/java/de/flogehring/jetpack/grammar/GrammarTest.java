@@ -1,13 +1,14 @@
 package de.flogehring.jetpack.grammar;
 
 
-import de.flogehring.jetpack.parse.Grammar;
+import de.flogehring.jetpack.datatypes.Node;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,33 +16,62 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GrammarTest {
 
     @Nested
-    class MathGrammarTests {
+    class MathGrammar {
 
-        @Test
-        void matches() {
-            assertTrue(testGrammar.fitsGrammar(
-                    "10"
-            ));
+        @Nested
+        class Matches {
+            @Test
+            void matches() {
+                assertTrue(testGrammar.fitsGrammar(
+                        "10"
+                ));
+            }
+
+            @ParameterizedTest
+            @CsvSource(value = {
+                    "One Expression,10,true",
+                    "Simple Plus,10 + 10,true",
+                    "Full Expression,(1)+(1),true",
+                    "Unclosed Parenthesis,(1 +,false",
+                    "Only Product,19 ^ 3 / 1 * 5, true",
+                    "Only Product in Parenthesis,(19 ^ 3 / 1 * 5), true",
+                    "Parenthesis,(1), true",
+                    "(1 Plus 1),(1 +1), true",
+                    "Parenthesis,2^2, true",
+                    "Parenthesis,(1), true",
+                    "Parenthesis,((1)), true",
+                    "Parenthesis Mismatch,(1)), false",
+                    "Double operators,1**1, false",
+            })
+            void testMatches(String testMessage, String expr, boolean expected) {
+                assertEquals(expected, testGrammar.fitsGrammar(expr), testMessage);
+            }
         }
 
-        @ParameterizedTest
-        @CsvSource(value = {
-                "One Expression,10,true",
-                "Simple Plus,10 + 10,true",
-                "Full Expression,(1)+(1),true",
-                "Unclosed Parenthesis,(1 +,false",
-                "Only Product,19 ^ 3 / 1 * 5, true",
-                "Only Product in Parenthesis,(19 ^ 3 / 1 * 5), true",
-                "Parenthesis,(1), true",
-                "(1 Plus 1),(1 +1), true",
-                "Parenthesis,2^2, true",
-                "Parenthesis,(1), true",
-                "Parenthesis,((1)), true",
-                "Parenthesis Mismatch,(1)), false",
-                "Double operators,1**1, false",
-        })
-        void testMatches(String testMessage, String expr, boolean expected) {
-            assertEquals(expected, testGrammar.fitsGrammar(expr), testMessage);
+        @Nested
+        class Parse {
+
+            @Test
+            void simple() {
+                Node<Symbol> parseTree = testGrammar.parse("10").getEither();
+                Node<Symbol> expected = Node.of(
+                        new Symbol.NonTerminal("Expr"),
+                        List.of(
+                                Node.of(
+                                        Symbol.nonTerminal("Sum"),
+                                        List.of(
+                                                Node.of(
+                                                        Symbol.nonTerminal("Product"),
+                                                        List.of(Node.of(Symbol.nonTerminal("Power"),
+                                                                List.of(
+                                                                        Node.of(Symbol.nonTerminal("Value"), List.of(Node.leaf(Symbol.terminal("10"
+                                                                        )))))
+                                                        ))))
+                                )
+
+                        ));
+                assertEquals(expected, parseTree);
+            }
         }
 
         /**

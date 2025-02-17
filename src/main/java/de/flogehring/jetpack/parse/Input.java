@@ -1,4 +1,4 @@
-package de.flogehring.jetpack.grammar;
+package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.util.Check;
 
