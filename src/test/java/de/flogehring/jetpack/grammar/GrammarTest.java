@@ -72,6 +72,13 @@ public class GrammarTest {
                         ));
                 assertEquals(expected, parseTree);
             }
+
+            @Test
+            void onePlusOne() {
+                // TODO Define expected, System.out.println looks good though 👌
+                Node<Symbol> parseTree = testGrammar.parse("(1)+(1)").getEither();
+                System.out.println(parseTree);
+            }
         }
 
         /**

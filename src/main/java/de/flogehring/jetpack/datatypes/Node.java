@@ -2,11 +2,13 @@ package de.flogehring.jetpack.datatypes;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode
+@ToString
 public class Node<S> {
 
     private final S value;
