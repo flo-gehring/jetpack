@@ -14,7 +14,6 @@ import static de.flogehring.jetpack.parse.EvaluateTerminal.applyTerminal;
 public class Evaluate {
 
     private Evaluate() {
-
     }
 
     public static Either<ConsumedExpression, String> evaluate(
@@ -88,7 +87,7 @@ public class Evaluate {
         if (memoTableHit && callStack.search(nonTerminal) != -1) {
             return switch (lookup) {
                 case MemoTableLookup.Success(var offset, var parseTree) -> Either.ofThis(
-                        new ConsumedExpression(offset, List.of(parseTree))
+                        new ConsumedExpression(offset, parseTree)
                 );
                 case MemoTableLookup.Fail() -> Either.or("Previous Parsing Failure");
                 case MemoTableLookup.NoHit() -> throw new RuntimeException("Unreachable State");
@@ -122,7 +121,7 @@ public class Evaluate {
             }
             memoTable.insertSuccess(key,
                     consumedExpression.parsePosition(),
-                    Node.of(nonTerminal, consumedExpression.parseTree())
+                     consumedExpression.parseTree()
             );
             position = consumedExpression.parsePosition();
         } else {
@@ -173,7 +172,7 @@ public class Evaluate {
             parsingState.getLookup().insertSuccess(
                     key,
                     consumedExpression.parsePosition(),
-                    Node.of(nonTerminal, consumedExpression.parseTree())
+                    consumedExpression.parseTree()
             );
             if (consumedExpression.parsePosition() <= currentPosition) {
                 ans = Either.or("No Progress made");

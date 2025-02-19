@@ -34,10 +34,8 @@ public class Grammar {
     }
 
     public Either<Node<Symbol>, String> parse(String s) {
-        return parseString(s).map(consumed -> Node.of(
-                new Symbol.NonTerminal(startingRule),
-                consumed.parseTree()
-        ));
+        return parseString(s).map(consumedExpression ->
+                consumedExpression.parseTree().getFirst());
     }
 
     public boolean fitsGrammar(String s) {

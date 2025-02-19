@@ -5,11 +5,12 @@ import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.util.Check;
 
 import java.util.HashMap;
+import java.util.List;
 
 public class MemoTable {
 
     private final HashMap<MemoTableKey, Integer> lookupOffset;
-    private final HashMap<MemoTableKey, Node<Symbol>> lookupParseTree;
+    private final HashMap<MemoTableKey, List<Node<Symbol>>> lookupParseTree;
 
     private MemoTable() {
         lookupOffset = new HashMap<>();
@@ -23,7 +24,7 @@ public class MemoTable {
     public void insertSuccess(
             MemoTableKey key,
             int offset,
-            Node<Symbol> parseTree
+            List<Node<Symbol>> parseTree
     ) {
         Check.require(
                 offset > 0,
@@ -43,7 +44,7 @@ public class MemoTable {
             if (offset == -1) {
                 return new MemoTableLookup.Fail();
             }
-            Node<Symbol> parseTree = lookupParseTree.get(key);
+            List<Node<Symbol>> parseTree = lookupParseTree.get(key);
             return new MemoTableLookup.Success(offset, parseTree);
 
         }
