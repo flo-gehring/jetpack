@@ -4,6 +4,7 @@ import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.*;
 
+import java.util.List;
 import java.util.Stack;
 import java.util.function.Function;
 
@@ -87,7 +88,7 @@ public class Evaluate {
         if (memoTableHit && callStack.search(nonTerminal) != -1) {
             return switch (lookup) {
                 case MemoTableLookup.Success(var offset, var parseTree) -> Either.ofThis(
-                        new ConsumedExpression(offset, parseTree.getChildren())
+                        new ConsumedExpression(offset, List.of(parseTree))
                 );
                 case MemoTableLookup.Fail() -> Either.or("Previous Parsing Failure");
                 case MemoTableLookup.NoHit() -> throw new RuntimeException("Unreachable State");
@@ -147,8 +148,13 @@ public class Evaluate {
                     position = consumedExpression.parsePosition();
                 }
             }
+            return ans;
+        } else {
+            return ans.map(consumed -> new ConsumedExpression(
+                    consumed.parsePosition(),
+                    List.of(Node.of(nonTerminal, consumed.parseTree()))
+            ));
         }
-        return ans;
     }
 
     private static Either<ConsumedExpression, String> growLr(

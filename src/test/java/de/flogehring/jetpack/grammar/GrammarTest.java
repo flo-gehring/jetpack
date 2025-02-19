@@ -118,7 +118,7 @@ public class GrammarTest {
                                 )
                         ),
                         "Value", Expression.orderedChoice(
-                                Expression.plus(Expression.terminal("[0-9]")),
+                                Expression.plus(Expression.terminal("[0-9]+")),
                                 Expression.sequence(
                                         Expression.sequence(
                                                 Expression.terminal("\\("),
