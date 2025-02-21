@@ -14,7 +14,6 @@ public class EvaluateOperators {
 
 
     private EvaluateOperators() {
-
     }
 
     public static Either<ConsumedExpression, String> applyOperator(

@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 public class EvaluateTerminal {
 
     private EvaluateTerminal() {
-
     }
 
     public static Either<ConsumedExpression, String> applyTerminal(String symbol, Input input, int currentPosition) {

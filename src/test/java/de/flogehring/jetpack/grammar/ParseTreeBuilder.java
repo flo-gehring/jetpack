@@ -12,8 +12,6 @@ public class ParseTreeBuilder {
             List<Node<Symbol>> childrenLast
     ) {
         Check.require(!nonTerminalDescent.isEmpty(), "Cant Create Node from empty list");
-
-
         if (nonTerminalDescent.size() == 1) {
             return Node.of(Symbol.nonTerminal(nonTerminalDescent.getFirst()), childrenLast);
         } else {
@@ -29,6 +27,4 @@ public class ParseTreeBuilder {
     public static Node<Symbol> terminalLeaf(String terminal) {
         return Node.leaf(Symbol.terminal(terminal));
     }
-
-
 }
