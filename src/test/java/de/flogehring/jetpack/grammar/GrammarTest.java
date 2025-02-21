@@ -1,47 +1,96 @@
 package de.flogehring.jetpack.grammar;
 
 
-import de.flogehring.jetpack.parse.Grammar;
+import de.flogehring.jetpack.datatypes.Either;
+import de.flogehring.jetpack.datatypes.Node;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.List;
 import java.util.Map;
 
+import static de.flogehring.jetpack.grammar.ParseTreeBuilder.createTree;
+import static de.flogehring.jetpack.grammar.ParseTreeBuilder.terminalLeaf;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GrammarTest {
 
     @Nested
-    class MathGrammarTests {
+    class MathGrammar {
 
-        @Test
-        void matches() {
-            assertTrue(testGrammar.fitsGrammar(
-                    "10"
-            ));
+        @Nested
+        class Matches {
+            @Test
+            void matches() {
+                assertTrue(testGrammar.fitsGrammar(
+                        "10"
+                ));
+            }
+
+            @ParameterizedTest
+            @CsvSource(value = {
+                    "One Expression,10,true",
+                    "Simple Plus,10 + 10,true",
+                    "Full Expression,(1)+(1),true",
+                    "Unclosed Parenthesis,(1 +,false",
+                    "Only Product,19 ^ 3 / 1 * 5, true",
+                    "Only Product in Parenthesis,(19 ^ 3 / 1 * 5), true",
+                    "Parenthesis,(1), true",
+                    "(1 Plus 1),(1 +1), true",
+                    "Parenthesis,2^2, true",
+                    "Parenthesis,(1), true",
+                    "Parenthesis,((1)), true",
+                    "Parenthesis Mismatch,(1)), false",
+                    "Double operators,1**1, false",
+            })
+            void testMatches(String testMessage, String expr, boolean expected) {
+                assertEquals(expected, testGrammar.fitsGrammar(expr), testMessage);
+            }
         }
 
-        @ParameterizedTest
-        @CsvSource(value = {
-                "One Expression,10,true",
-                "Simple Plus,10 + 10,true",
-                "Full Expression,(1)+(1),true",
-                "Unclosed Parenthesis,(1 +,false",
-                "Only Product,19 ^ 3 / 1 * 5, true",
-                "Only Product in Parenthesis,(19 ^ 3 / 1 * 5), true",
-                "Parenthesis,(1), true",
-                "(1 Plus 1),(1 +1), true",
-                "Parenthesis,2^2, true",
-                "Parenthesis,(1), true",
-                "Parenthesis,((1)), true",
-                "Parenthesis Mismatch,(1)), false",
-                "Double operators,1**1, false",
-        })
-        void testMatches(String testMessage, String expr, boolean expected) {
-            assertEquals(expected, testGrammar.fitsGrammar(expr), testMessage);
+        @Nested
+        class Parse {
+
+            @Test
+            void simple() {
+                Node<Symbol> parseTree = testGrammar.parse("10").getEither();
+                Node<Symbol> expected = createTree(
+                        List.of("Expr", "Sum", "Product", "Power", "Value"),
+                        List.of(terminalLeaf("10"))
+                );
+                assertEquals(expected, parseTree);
+            }
+
+            @Test
+            void onePlusOne() {
+                Node<Symbol> parseTree = testGrammar.parse("(1)+(1)").getEither();
+                List<String> descentFromSum = List.of("Product", "Power", "Value");
+                List<String> descentFromExpr = List.of("Expr", "Sum", "Product", "Power", "Value");
+                Node<Symbol> oneInParantheses = createTree(
+                        descentFromSum,
+                        List.of(
+                                terminalLeaf("("),
+                                createTree(
+                                        descentFromExpr,
+                                        List.of(terminalLeaf("1"))
+                                ),
+                                terminalLeaf(")")
+                        )
+                );
+                Node<Symbol> expected = createTree(
+                        List.of("Expr", "Sum"),
+                        List.of(
+                                oneInParantheses,
+                                terminalLeaf("+"),
+                                oneInParantheses
+                        )
+                );
+                assertEquals(expected, parseTree);
+            }
         }
 
         /**
@@ -88,7 +137,7 @@ public class GrammarTest {
                                 )
                         ),
                         "Value", Expression.orderedChoice(
-                                Expression.plus(Expression.terminal("[0-9]")),
+                                Expression.plus(Expression.terminal("[0-9]+")),
                                 Expression.sequence(
                                         Expression.sequence(
                                                 Expression.terminal("\\("),
@@ -137,6 +186,8 @@ public class GrammarTest {
                 "Single Number,1,true",
                 "Two Numbers,1-1,true",
                 "Three Numbers,1-1-1,true",
+                "Multiple Digits,10,true",
+                "Multiple Digits,10 - 101,true",
                 "Multiple Different,1 - 1 -2 -3-4-1,true",
                 "Does not match because expr not completed,1 - ,false",
                 "Completely wrong,1 - asdf ,false"
@@ -154,28 +205,81 @@ public class GrammarTest {
     @Nested
     class IndirectLeftRecursionTwo {
 
-        Grammar g = new Grammar(
+        Grammar grammar = new Grammar(
                 "Expr",
                 Map.of(
                         "Expr", Expression.orderedChoice(
-                                Expression.sequence(Expression.nonTerminal("Expr"), Expression.sequence(Expression.terminal("\\+"), Expression.nonTerminal("Num"))),
+                                Expression.sequence(
+                                        Expression.nonTerminal("Expr"),
+                                        Expression.sequence(
+                                                Expression.terminal("\\+"),
+                                                Expression.nonTerminal("Num"))
+                                ),
                                 Expression.nonTerminal("Num")
 
                         ),
                         "Num", Expression.orderedChoice(
-                                Expression.sequence(Expression.nonTerminal("Num"), Expression.nonTerminal("Digit")),
+                                Expression.sequence(
+                                        Expression.nonTerminal("Num"),
+                                        Expression.nonTerminal("Digit")
+                                ),
                                 Expression.nonTerminal("Digit")
                         ),
                         "Digit", Expression.terminal("[0-9]")
-
                 )
         );
 
         @Test
-        void parse() {
+        void fitsGrammar() {
             assertTrue(
-                    g.fitsGrammar("12 + 3")
+                    grammar.fitsGrammar("12 + 3")
             );
+        }
+
+
+        @Nested
+        class Parse {
+
+            @Test
+            void simple() {
+                Node<Symbol> actual = grammar.parse("1+1").getEither();
+                Node<Symbol> expected = createTree(
+                        List.of("Expr"),
+                        List.of(
+                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1"))),
+                                terminalLeaf("+"),
+                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1")))
+                        )
+                );
+                assertEquals(expected, actual);
+            }
+
+            @Test
+            @Disabled
+            void dalmatiansReversedParseFailure() {
+                assertInstanceOf(Either.This.class, grammar.parse("1 + 100"));
+            }
+
+            @Test
+            void dalmatians() {
+                Node<Symbol> expected = createTree(
+                        List.of("Expr"),
+                        List.of(
+                                createTree(
+                                        List.of("Expr"),
+                                        List.of(createTree(
+                                                List.of("Num"),
+                                                List.of(
+                                                        createTree(List.of("Digit"), List.of(terminalLeaf("1"))),
+                                                        createTree(List.of("Digit"), List.of(terminalLeaf("0"))),
+                                                        createTree(List.of("Digit"), List.of(terminalLeaf("0")))
+                                                )))
+                                ),
+                                terminalLeaf("+"),
+                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1")))
+                        ));
+                assertEquals(expected, grammar.parse("100 + 1").getEither());
+            }
         }
     }
 
