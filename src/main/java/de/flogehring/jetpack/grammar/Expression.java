@@ -2,6 +2,7 @@ package de.flogehring.jetpack.grammar;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 
 public sealed interface Expression permits Symbol, Operator {
@@ -15,6 +16,10 @@ public sealed interface Expression permits Symbol, Operator {
     }
 
     static Expression sequence(Expression first, Expression second, Expression... expressions) {
+        return applyOperatorInOrder(Operator.Sequence::new, first, second, expressions);
+    }
+
+    private static Expression applyOperatorInOrder(BinaryOperator<Expression> combiner, Expression first, Expression second, Expression[] expressions) {
         List<Expression> all = Stream.concat(
                 Stream.of(first, second),
                 Arrays.stream(expressions)
@@ -22,9 +27,9 @@ public sealed interface Expression permits Symbol, Operator {
         List<Expression> reversed = all.reversed();
         Expression last = reversed.getFirst();
         Expression secondLast = reversed.get(1);
-        Expression sequence = new Operator.Sequence(secondLast, last);
+        Expression sequence = combiner.apply(secondLast, last);
         for (int i = 2; i < reversed.size(); ++i) {
-            sequence = new Operator.Sequence(reversed.get(i), sequence);
+            sequence = combiner.apply(reversed.get(i), sequence);
         }
         return sequence;
     }
@@ -48,11 +53,23 @@ public sealed interface Expression permits Symbol, Operator {
         );
     }
 
+    static Expression orderedChoice(Expression firstChoice, Expression secondChoice, Expression ... nextChoices) {
+        return applyOperatorInOrder(Operator.OrderedChoice::new, firstChoice, secondChoice, nextChoices);
+    }
+
     static Expression optional(Expression exp) {
         return new Operator.Optional(exp);
     }
 
     static Expression plus(Expression exp) {
         return new Operator.Plus(exp);
+    }
+
+    static Expression questionMark(Expression expression) {
+        throw new RuntimeException();
+    }
+
+    static Expression not(Expression terminal) {
+        throw new RuntimeException();
     }
 }

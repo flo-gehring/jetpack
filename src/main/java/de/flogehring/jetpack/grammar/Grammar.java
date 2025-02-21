@@ -11,10 +11,30 @@ import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Objects;
 
+import static de.flogehring.jetpack.grammar.Expression.*;
+
 public class Grammar {
 
     private final String startingRule;
     private final Map<String, Expression> rules;
+
+    private static final Map<String, Expression> grammarGrammar = Map.of(
+            "Grammar", plus(nonTerminal("Definition")),
+            "Definition", sequence(nonTerminal("Identifier"), terminal("<-"), nonTerminal("Expression")),
+            "Expression", sequence(nonTerminal("Sequence"), plus(group(sequence(terminal("/"), nonTerminal("Sequence"))))),
+            "Sequence", star(nonTerminal("Prefix")),
+            "Prefix", sequence(Expression.questionMark(orderedChoice(terminal("&"), terminal("!"))), nonTerminal("Suffix")),
+            "Suffix", sequence(nonTerminal("Primary"), questionMark(orderedChoice(terminal("?"), terminal("*"), terminal("+")))), // TODO make these regex safe
+            "Primary", orderedChoice(
+                    sequence(nonTerminal("Identifier"), Expression.not(terminal("<-"))),
+                    sequence(terminal("\\("), nonTerminal("Expression"), terminal("\\)")),
+                    nonTerminal("Literal"),
+                    nonTerminal("Class"),
+                    terminal("\\.")
+            ),
+            "Literal", terminal("\"[^\"^\\s]+\""),
+            "Identifier", terminal("[a-zA-Z_]+")
+    );
 
     public Grammar(String startingRule, Map<String, Expression> rules) {
         Check.require(
