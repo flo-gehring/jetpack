@@ -2,13 +2,11 @@ package de.flogehring.jetpack.datatypes;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode
-@ToString
 public class Node<S> {
 
     private final S value;
@@ -26,5 +24,20 @@ public class Node<S> {
 
     public static <S> Node<S> leaf(S value) {
         return new Node<>(value, new ArrayList<>());
+    }
+
+    @Override
+    public String toString() {
+        String lineSep = System.lineSeparator();
+        List<String> intermediate = getStringLines();
+        return String.join(lineSep, intermediate);
+    }
+
+    private List<String> getStringLines() {
+        ArrayList<String> result = new ArrayList<>(
+                children.stream().flatMap(c -> c.getStringLines().stream().map(l -> " -" + l)).toList()
+        );
+        result.addFirst("Node " + value.toString());
+        return result;
     }
 }

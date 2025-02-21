@@ -121,7 +121,7 @@ public class Evaluate {
             }
             memoTable.insertSuccess(key,
                     consumedExpression.parsePosition(),
-                     consumedExpression.parseTree()
+                    consumedExpression.parseTree()
             );
             position = consumedExpression.parsePosition();
         } else {
@@ -167,6 +167,11 @@ public class Evaluate {
         parsingState.setGrowState(true);
         Expression exp = grammar.apply(nonTerminal);
         Either<ConsumedExpression, String> ans = evaluateExpression(exp, input, currentPosition, grammar, parsingState);
+        ans = ans.map(consumedExpression -> new ConsumedExpression(
+                consumedExpression.parsePosition(), List.of(
+                Node.of(nonTerminal, consumedExpression.parseTree())
+        )
+        ));
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
         if (ans instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
             parsingState.getLookup().insertSuccess(
