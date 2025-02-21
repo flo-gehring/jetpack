@@ -18,6 +18,9 @@ public class Grammar {
     private final String startingRule;
     private final Map<String, Expression> rules;
 
+    /**
+     * See  <a href="https://bford.info/pub/lang/peg.pdf">Paper</a> for details
+     */
     private static final Map<String, Expression> grammarGrammar = Map.of(
             "Grammar", plus(nonTerminal("Definition")),
             "Definition", sequence(nonTerminal("Identifier"), terminal("<-"), nonTerminal("Expression")),
