@@ -18,7 +18,7 @@ public class Check {
         return map.containsKey(key);
     }
 
-    public static boolean checkNotNull(Object... objects) {
+    public static boolean requireNotNull(Object... objects) {
         boolean result = true;
         for (Object o : objects) {
             result &= o != null;

@@ -7,9 +7,7 @@ import de.flogehring.jetpack.parse.Evaluate;
 import de.flogehring.jetpack.parse.Input;
 import de.flogehring.jetpack.util.Check;
 
-import java.io.NotActiveException;
 import java.text.MessageFormat;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
@@ -39,8 +37,8 @@ public class Grammar {
                     nonTerminal("Class"),
                     terminalLiteral(".")
             ),
-            "Literal", terminal("\"[^\"]\"+"),
-            "Class", terminal("\"[^\"]\"+"), // TODO Check if class is correct and or necessary
+            "Literal", terminal("\"[^\"]+\""),
+            "Class", terminal("\"[^\"]+\""),
             "Identifier", terminal("[a-zA-Z_]+")
     );
 
@@ -49,29 +47,20 @@ public class Grammar {
                 "Grammar",
                 grammarGrammar
         );
-        String[] split = grammarDefinition.split("\n");
-        for (String line : Arrays.stream(split).map(String::trim).toList()) {
-            System.out.println(line);
-            Either<ConsumedExpression, String> parsedGrammarDefinition = parsingGrammar.parseString(line);
-            if (parsedGrammarDefinition instanceof
-                    Either.Or<ConsumedExpression, String>(String s)
-            ) {
-                System.out.println("Failed to parse " + line + "with error" + s);
-            } else {
-                System.out.println("Success! " + parsedGrammarDefinition.getEither().parseTree());
-            }
-        }
-        return null;
+
+        Either<ConsumedExpression, String> consumedExpressionStringEither = parsingGrammar.parseString(grammarDefinition);
+        return consumedExpressionStringEither.flatMap(Grammar::createGrammar);
+
     }
 
     private static Either<Grammar, String> createGrammar(ConsumedExpression consumedExpression) {
         System.out.println(consumedExpression.parseTree().getFirst());
-        throw new RuntimeException();
+        throw new RuntimeException("Not implemented yet!");
     }
 
     public Grammar(String startingRule, Map<String, Expression> rules) {
         Check.require(
-                Check.checkNotNull(startingRule, rules),
+                Check.requireNotNull(startingRule, rules),
                 "The parameters to Grammar can't be null."
         );
         Check.require(
