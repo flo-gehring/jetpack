@@ -22,9 +22,10 @@ public class Input {
         TreeMap<Integer, String> tokens = new TreeMap<>();
         int runningLength = 0;
         for (String token : splitInput) {
-            if (!token.isEmpty()) {
-                tokens.put(runningLength, token);
-                runningLength += token.length();
+            String trimmedToken = token.trim();
+            if (!trimmedToken.isEmpty()) {
+                tokens.put(runningLength, trimmedToken);
+                runningLength += trimmedToken.length();
             }
         }
         return new Input(tokens);
@@ -49,7 +50,6 @@ public class Input {
         Check.require(
                 offsetInToken < token.length(),
                 MessageFormat.format(
-
                         "Out of bounds index {0} for token {1} starting at {2} with length {3}" +
                                 " -> Offset {4} too large",
                         index, token, startOfToken, token.length(), offsetInToken
@@ -63,10 +63,8 @@ public class Input {
         int startOfToken = floorEntry.getKey();
         int offsetInToken = position - startOfToken;
         String token = floorEntry.getValue();
-
-
         Check.require(
-                offsetInToken < token.length(),
+                offsetInToken <= token.length(),
                 MessageFormat.format(
 
                         "Out of bounds index {0} for token {1} starting at {2} with length {3}" +
@@ -82,7 +80,7 @@ public class Input {
         left += " " + token.substring(0, offsetInToken);
         String right = token.substring(offsetInToken) + " ";
         if (floorEntry.getKey() < tokens.size()) {
-            right = String.join(" ", tokens.subMap(startOfToken, false, tokens.lastKey(), false)
+            right += String.join(" ", tokens.subMap(startOfToken, false, tokens.lastKey(), false)
                     .values());
         }
         return new Tuple<>(left, right);

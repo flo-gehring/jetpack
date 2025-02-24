@@ -9,6 +9,7 @@ import de.flogehring.jetpack.util.Check;
 
 import java.io.NotActiveException;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
@@ -25,12 +26,12 @@ public class Grammar {
     private static final Map<String, Expression> grammarGrammar = Map.of(
             "Grammar", plus(nonTerminal("Definition")),
             "Definition", sequence(nonTerminal("Identifier"), terminalLiteral("<-"), nonTerminal("Expression")),
-            "Expression", sequence(nonTerminal("Sequence"), plus(group(sequence(terminalLiteral("/"), nonTerminal("Sequence"))))),
+            "Expression", sequence(nonTerminal("Sequence"), star(group(sequence(terminalLiteral("/"), nonTerminal("Sequence"))))),
             "Sequence", star(nonTerminal("Prefix")),
             "Prefix", sequence(Expression.questionMark(orderedChoice(terminalLiteral("&"), terminalLiteral("!"))), nonTerminal("Suffix")),
             "Suffix", sequence(nonTerminal("Primary"),
                     questionMark(orderedChoice(terminalLiteral("?"), terminalLiteral("*"), terminalLiteral("+")))
-            ), // TODO make these regex safe
+            ),
             "Primary", orderedChoice(
                     sequence(nonTerminal("Identifier"), Expression.not(terminalLiteral("<-"))),
                     sequence(terminalLiteral("("), nonTerminal("Expression"), terminalLiteral(")")),
@@ -48,12 +49,19 @@ public class Grammar {
                 "Grammar",
                 grammarGrammar
         );
-        Either<ConsumedExpression, String> parsedGrammarDefinition = parsingGrammar.parseString(grammarDefinition);
-        if (parsedGrammarDefinition instanceof Either.Or<ConsumedExpression, String>(String s)) {
-            System.out.println(s);
+        String[] split = grammarDefinition.split("\n");
+        for (String line : Arrays.stream(split).map(String::trim).toList()) {
+            System.out.println(line);
+            Either<ConsumedExpression, String> parsedGrammarDefinition = parsingGrammar.parseString(line);
+            if (parsedGrammarDefinition instanceof
+                    Either.Or<ConsumedExpression, String>(String s)
+            ) {
+                System.out.println("Failed to parse " + line + "with error" + s);
+            } else {
+                System.out.println("Success! " + parsedGrammarDefinition.getEither().parseTree());
+            }
         }
-        return parsedGrammarDefinition.flatMap(Grammar::createGrammar);
-
+        return null;
     }
 
     private static Either<Grammar, String> createGrammar(ConsumedExpression consumedExpression) {
