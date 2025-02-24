@@ -72,10 +72,6 @@ public sealed interface Expression permits Symbol, Operator {
         return new Operator.Plus(expression);
     }
 
-    static Expression questionMark(Expression expression) {
-        return new Operator.QuestionMark(expression);
-    }
-
     static Expression not(Expression expression) {
         return new Operator.Not(expression);
     }

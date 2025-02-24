@@ -18,12 +18,12 @@ public class Check {
         return map.containsKey(key);
     }
 
-    public static boolean requireNotNull(Object... objects) {
+    public static void requireNotNull(String message, Object... objects) {
         boolean result = true;
         for (Object o : objects) {
             result &= o != null;
         }
-        return result;
+        require(result, message);
     }
 
     public static void requireNotEmpty(String string) {

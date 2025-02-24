@@ -6,48 +6,50 @@ public sealed interface Operator extends Expression {
 
     record Sequence(Expression first, Expression second) implements Operator {
 
+        public Sequence {
+            Check.requireNotNull("No Expression for Sequence can be null ", first, second);
+        }
     }
 
     record OrderedChoice(Expression either, Expression or) implements Operator {
+        public OrderedChoice {
+            Check.requireNotNull("No Expression for Ordered Choice can be null", either, or);
+        }
 
     }
 
     record Star(Expression exp) implements Operator {
 
+        public Star {
+            Check.requireNotNull("Expression for *-Operator can't be null", exp);
+        }
     }
 
     record Optional(Expression exp) implements Operator {
 
         public Optional {
-            Check.requireNotNull(exp, "Expression for ?-Operator can't be null");
+            Check.requireNotNull("Expression for ?-Operator can't be null", exp);
         }
     }
 
     record Plus(Expression exp) implements Operator {
 
         public Plus {
-            Check.requireNotNull(exp, "Expression for +-Operator can't be null");
+            Check.requireNotNull("Expression for +-Operator can't be null", exp);
         }
     }
 
     record Group(Expression exp) implements Operator {
 
         public Group {
-            Check.requireNotNull(exp, "Expression in Group can't be null");
-        }
-    }
-
-    record QuestionMark(Expression exp) implements Operator {
-
-        public QuestionMark {
-            Check.requireNotNull(exp, "Expression for ?-Operator can't be null");
+            Check.requireNotNull("Expression in Group can't be null", exp);
         }
     }
 
     record Not(Expression exp) implements Operator {
 
         public Not {
-            Check.requireNotNull(exp, "Expression of !-Operator can't be null");
+            Check.requireNotNull("Expression of !-Operator can't be null", exp);
         }
     }
 }

@@ -26,9 +26,9 @@ public class Grammar {
             "Definition", sequence(nonTerminal("Identifier"), terminalLiteral("<-"), nonTerminal("Expression")),
             "Expression", sequence(nonTerminal("Sequence"), star(group(sequence(terminalLiteral("/"), nonTerminal("Sequence"))))),
             "Sequence", star(nonTerminal("Prefix")),
-            "Prefix", sequence(Expression.questionMark(orderedChoice(terminalLiteral("&"), terminalLiteral("!"))), nonTerminal("Suffix")),
+            "Prefix", sequence(optional(orderedChoice(terminalLiteral("&"), terminalLiteral("!"))), nonTerminal("Suffix")),
             "Suffix", sequence(nonTerminal("Primary"),
-                    questionMark(orderedChoice(terminalLiteral("?"), terminalLiteral("*"), terminalLiteral("+")))
+                    optional(orderedChoice(terminalLiteral("?"), terminalLiteral("*"), terminalLiteral("+")))
             ),
             "Primary", orderedChoice(
                     sequence(nonTerminal("Identifier"), Expression.not(terminalLiteral("<-"))),
@@ -59,10 +59,8 @@ public class Grammar {
     }
 
     public Grammar(String startingRule, Map<String, Expression> rules) {
-        Check.require(
-                Check.requireNotNull(startingRule, rules),
-                "The parameters to Grammar can't be null."
-        );
+        Check.requireNotNull("The parameters to Grammar can't be null.",
+                startingRule, rules);
         Check.require(
                 Check.hasKey(rules, startingRule),
                 MessageFormat.format(

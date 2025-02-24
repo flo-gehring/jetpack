@@ -57,26 +57,7 @@ public class EvaluateOperators {
                     currentPosition,
                     evaluator
             );
-            case Operator.QuestionMark(var expression) -> consumeQuestionMark(
-                    expression,
-                    input,
-                    currentPosition,
-                    evaluator
-            );
             case Operator.Group(var expression) -> evaluator.resolveExpression(expression, input, currentPosition);
-        };
-    }
-
-    private static Either<ConsumedExpression, String> consumeQuestionMark(Expression expression, Input input, int currentPosition, ExpressionEvaluator evaluator) {
-        return switch (evaluator.resolveExpression(
-                expression, input, currentPosition)) {
-            case Either.This<ConsumedExpression, String>(var consumedExpression) -> Either.ofThis(consumedExpression);
-            case Either.Or<ConsumedExpression, String> _ -> Either.ofThis(
-                    new ConsumedExpression(
-                            currentPosition,
-                            List.of()
-                    )
-            );
         };
     }
 
