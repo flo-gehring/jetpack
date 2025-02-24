@@ -93,6 +93,23 @@ public class GrammarTest {
             }
         }
 
+        @Nested
+        class CreateGrammar {
+            private static final String grammarByText = """
+                    Expr <- Sum
+                    Sum <- Product (("+" / "-") Product)*
+                    Product <- Power (("*" / "/") Power)*
+                    Power <- Value ("^" Power)?
+                    Value <- "[0-9]+" / "(" Expr ")"
+                    """;
+
+            @Test
+            void createGrammar() {
+                Grammar actual = Grammar.of(grammarByText).getEither();
+                assertEquals(testGrammar, actual);
+            }
+        }
+
         /**
          * Expr    <-  Sum
          * Sum     <-  Product (('+' / '-') Product)*

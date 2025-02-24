@@ -7,6 +7,7 @@ import de.flogehring.jetpack.parse.Evaluate;
 import de.flogehring.jetpack.parse.Input;
 import de.flogehring.jetpack.util.Check;
 
+import java.io.NotActiveException;
 import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Objects;
@@ -23,21 +24,42 @@ public class Grammar {
      */
     private static final Map<String, Expression> grammarGrammar = Map.of(
             "Grammar", plus(nonTerminal("Definition")),
-            "Definition", sequence(nonTerminal("Identifier"), terminal("<-"), nonTerminal("Expression")),
-            "Expression", sequence(nonTerminal("Sequence"), plus(group(sequence(terminal("/"), nonTerminal("Sequence"))))),
+            "Definition", sequence(nonTerminal("Identifier"), terminalLiteral("<-"), nonTerminal("Expression")),
+            "Expression", sequence(nonTerminal("Sequence"), plus(group(sequence(terminalLiteral("/"), nonTerminal("Sequence"))))),
             "Sequence", star(nonTerminal("Prefix")),
-            "Prefix", sequence(Expression.questionMark(orderedChoice(terminal("&"), terminal("!"))), nonTerminal("Suffix")),
-            "Suffix", sequence(nonTerminal("Primary"), questionMark(orderedChoice(terminal("?"), terminal("*"), terminal("+")))), // TODO make these regex safe
+            "Prefix", sequence(Expression.questionMark(orderedChoice(terminalLiteral("&"), terminalLiteral("!"))), nonTerminal("Suffix")),
+            "Suffix", sequence(nonTerminal("Primary"),
+                    questionMark(orderedChoice(terminalLiteral("?"), terminalLiteral("*"), terminalLiteral("+")))
+            ), // TODO make these regex safe
             "Primary", orderedChoice(
-                    sequence(nonTerminal("Identifier"), Expression.not(terminal("<-"))),
-                    sequence(terminal("\\("), nonTerminal("Expression"), terminal("\\)")),
+                    sequence(nonTerminal("Identifier"), Expression.not(terminalLiteral("<-"))),
+                    sequence(terminalLiteral("("), nonTerminal("Expression"), terminalLiteral(")")),
                     nonTerminal("Literal"),
                     nonTerminal("Class"),
-                    terminal("\\.")
+                    terminalLiteral(".")
             ),
-            "Literal", terminal("\"[^\"^\\s]+\""),
+            "Literal", terminal("\"[^\"]\"+"),
+            "Class", terminal("\"[^\"]\"+"), // TODO Check if class is correct and or necessary
             "Identifier", terminal("[a-zA-Z_]+")
     );
+
+    public static Either<Grammar, String> of(String grammarDefinition) {
+        Grammar parsingGrammar = new Grammar(
+                "Grammar",
+                grammarGrammar
+        );
+        Either<ConsumedExpression, String> parsedGrammarDefinition = parsingGrammar.parseString(grammarDefinition);
+        if (parsedGrammarDefinition instanceof Either.Or<ConsumedExpression, String>(String s)) {
+            System.out.println(s);
+        }
+        return parsedGrammarDefinition.flatMap(Grammar::createGrammar);
+
+    }
+
+    private static Either<Grammar, String> createGrammar(ConsumedExpression consumedExpression) {
+        System.out.println(consumedExpression.parseTree().getFirst());
+        throw new RuntimeException();
+    }
 
     public Grammar(String startingRule, Map<String, Expression> rules) {
         Check.require(
@@ -70,7 +92,10 @@ public class Grammar {
         Either<ConsumedExpression, String> consume = Evaluate.evaluate(
                 input,
                 startingRule,
-                nonTerminal -> Objects.requireNonNull(rules.get(nonTerminal.name()))
+                nonTerminal -> Objects.requireNonNull(
+                        rules.get(nonTerminal.name()),
+                        () -> "Could not resolve Rule with name " + nonTerminal.name()
+                )
         );
 
         if (consume instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {

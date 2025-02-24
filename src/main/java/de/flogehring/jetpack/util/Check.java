@@ -25,4 +25,9 @@ public class Check {
         }
         return result;
     }
+
+    public static void requireNotEmpty(String string) {
+        Check.require(string != null, "String can't be null");
+        Check.require(!string.isEmpty(), "String can't be empty");
+    }
 }

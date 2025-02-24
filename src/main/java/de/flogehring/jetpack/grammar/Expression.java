@@ -1,5 +1,7 @@
 package de.flogehring.jetpack.grammar;
 
+import de.flogehring.jetpack.util.Check;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BinaryOperator;
@@ -46,6 +48,11 @@ public sealed interface Expression permits Symbol, Operator {
         return new Symbol.Terminal(terminal);
     }
 
+    static Expression terminalLiteral(String terminal) {
+        Check.requireNotEmpty(terminal);
+        return new Symbol.Terminal(java.util.regex.Pattern.quote(terminal));
+    }
+
     static Expression orderedChoice(Expression firstChoice, Expression secondChoice) {
         return new Operator.OrderedChoice(
                 firstChoice,
@@ -57,19 +64,19 @@ public sealed interface Expression permits Symbol, Operator {
         return applyOperatorInOrder(Operator.OrderedChoice::new, firstChoice, secondChoice, nextChoices);
     }
 
-    static Expression optional(Expression exp) {
-        return new Operator.Optional(exp);
+    static Expression optional(Expression expression) {
+        return new Operator.Optional(expression);
     }
 
-    static Expression plus(Expression exp) {
-        return new Operator.Plus(exp);
+    static Expression plus(Expression expression) {
+        return new Operator.Plus(expression);
     }
 
     static Expression questionMark(Expression expression) {
-        throw new RuntimeException();
+        return new Operator.QuestionMark(expression);
     }
 
-    static Expression not(Expression terminal) {
-        throw new RuntimeException();
+    static Expression not(Expression expression) {
+        return new Operator.Not(expression);
     }
 }

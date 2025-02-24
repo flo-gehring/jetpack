@@ -25,4 +25,13 @@ public sealed interface Operator extends Expression {
     record Group(Expression exp) implements Operator {
 
     }
+
+    record QuestionMark(Expression exp) implements Operator {
+        public QuestionMark {
+        }
+    }
+
+    record Not(Expression exp) implements  Operator {
+
+    }
 }
