@@ -6,6 +6,7 @@ import de.flogehring.jetpack.parse.ConsumedExpression;
 import de.flogehring.jetpack.parse.Evaluate;
 import de.flogehring.jetpack.parse.Input;
 import de.flogehring.jetpack.util.Check;
+import lombok.Getter;
 import lombok.ToString;
 
 import java.text.MessageFormat;
@@ -15,6 +16,7 @@ import java.util.function.Function;
 import static de.flogehring.jetpack.grammar.Expression.*;
 
 @ToString
+@Getter
 public class Grammar {
 
     private final String startingRule;
@@ -55,7 +57,6 @@ public class Grammar {
 
     private static Either<Grammar, String> createGrammar(ConsumedExpression consumedExpression) {
         Node<Symbol> parseTree = consumedExpression.parseTree().getFirst();
-        System.out.println(parseTree);
         Symbol grammar = parseTree.getValue();
         Check.require(grammar.equals(nonTerminal("Grammar")),
                 "Parse tree does not start with grammar definition");
