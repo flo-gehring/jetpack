@@ -17,6 +17,29 @@ public sealed interface Expression permits Symbol, Operator {
         return new Operator.Sequence(first, second);
     }
 
+    static Expression sequence(List<Expression> expressions) {
+        // TODO create empty expression and return
+        Check.require(!expressions.isEmpty(), "Can't construct sequence from empty list");
+        if(expressions.size() == 1) {
+            return expressions.getFirst();
+        }
+        return sequence(expressions.getFirst(),
+                expressions.get(1), expressions.subList(2,expressions.size()).toArray(new Expression[]{})
+        );
+    }
+
+    static Expression orderedChoice(List<Expression> expressions) {
+        Check.require(!expressions.isEmpty(), "Can't construct ordered choice from empty list");
+        if(expressions.size() == 1) {
+            return expressions.getFirst();
+        }
+        return orderedChoice(
+                expressions.getFirst(),
+                expressions.get(1),
+                expressions.subList(2,expressions.size()).toArray(new Expression[]{})
+        );
+    }
+
     static Expression sequence(Expression first, Expression second, Expression... expressions) {
         return applyOperatorInOrder(Operator.Sequence::new, first, second, expressions);
     }
@@ -74,5 +97,13 @@ public sealed interface Expression permits Symbol, Operator {
 
     static Expression not(Expression expression) {
         return new Operator.Not(expression);
+    }
+
+    static Expression and(Expression expression) {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    static Expression empty() {
+        throw new RuntimeException("Not Implemented yet");
     }
 }

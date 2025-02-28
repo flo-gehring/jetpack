@@ -9,6 +9,7 @@ import java.util.List;
 @EqualsAndHashCode
 public class Node<S> {
 
+    @Getter
     private final S value;
     @Getter
     private final List<Node<S>> children;
@@ -35,9 +36,9 @@ public class Node<S> {
 
     private List<String> getStringLines() {
         ArrayList<String> result = new ArrayList<>(
-                children.stream().flatMap(c -> c.getStringLines().stream().map(l -> " -" + l)).toList()
+                children.stream().flatMap(c -> c.getStringLines().stream().map(l -> "  " + l)).toList()
         );
-        result.addFirst("Node " + value.toString());
+        result.addFirst("> " + value.toString());
         return result;
     }
 }
