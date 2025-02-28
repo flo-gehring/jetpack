@@ -51,7 +51,25 @@ public class EvaluateOperators {
                     currentPosition,
                     evaluator
             );
+            case Operator.Not(var expression) -> consumeNot(
+                    expression,
+                    input,
+                    currentPosition,
+                    evaluator
+            );
             case Operator.Group(var expression) -> evaluator.resolveExpression(expression, input, currentPosition);
+        };
+    }
+
+    private static Either<ConsumedExpression, String> consumeNot(Expression expression, Input input, int currentPosition, ExpressionEvaluator evaluator) {
+        return switch (evaluator.resolveExpression(expression, input, currentPosition)) {
+            case Either.This<ConsumedExpression, String>(var _) -> Either.or("Matched on not predicate");
+            case Either.Or<ConsumedExpression, String> _ -> Either.ofThis(
+                    new ConsumedExpression(
+                            currentPosition,
+                            List.of()
+                    )
+            );
         };
     }
 

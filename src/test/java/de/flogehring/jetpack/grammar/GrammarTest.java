@@ -93,6 +93,30 @@ public class GrammarTest {
             }
         }
 
+        @Nested
+        class CreateGrammar {
+            private static final String grammarByText = """
+                    Expr <- Sum
+                    Sum <- Product (("\\+" / "-") Product)*
+                    Product <- Power (("\\*" / "/") Power)*
+                    Power <- Value ("\\^" Power)?
+                    Value <- "[0-9]+" / "\\(" Expr "\\)"
+                    """;
+
+            @Test
+            void createGrammar() {
+
+                Grammar actual = Grammar.of(grammarByText).getEither();
+                Map<String, Expression> actualRules = actual.getRules();
+                Map<String, Expression> expectedRules = testGrammar.getRules();
+                assertEquals(actualRules.keySet(), expectedRules.keySet());
+                assertEquals(actual.getStartingRule(), testGrammar.getStartingRule());
+                for (var key : actualRules.keySet()) {
+                    assertEquals(testGrammar.getRules().get(key), actual.getRules().get(key), "Comparing rule: " + key);
+                }
+            }
+        }
+
         /**
          * Expr    <-  Sum
          * Sum     <-  Product (('+' / '-') Product)*
@@ -108,10 +132,10 @@ public class GrammarTest {
                                 Expression.nonTerminal("Product"),
                                 Expression.star(Expression.group(
                                         Expression.sequence(
-                                                Expression.orderedChoice(
+                                                Expression.group(Expression.orderedChoice(
                                                         Expression.terminal("\\+"),
                                                         Expression.terminal("-")
-                                                ),
+                                                )),
                                                 Expression.nonTerminal("Product")
                                         )
                                 ))),
@@ -119,10 +143,10 @@ public class GrammarTest {
                                 Expression.nonTerminal("Power"),
                                 Expression.star(Expression.group(
                                         Expression.sequence(
-                                                Expression.orderedChoice(
+                                                Expression.group(Expression.orderedChoice(
                                                         Expression.terminal("\\*"),
                                                         Expression.terminal("/")
-                                                ),
+                                                )),
                                                 Expression.nonTerminal("Power")
                                         )
                                 ))),
@@ -137,12 +161,10 @@ public class GrammarTest {
                                 )
                         ),
                         "Value", Expression.orderedChoice(
-                                Expression.plus(Expression.terminal("[0-9]+")),
+                                Expression.terminal("[0-9]+"),
                                 Expression.sequence(
-                                        Expression.sequence(
-                                                Expression.terminal("\\("),
-                                                Expression.nonTerminal("Expr")
-                                        ),
+                                        Expression.terminal("\\("),
+                                        Expression.nonTerminal("Expr"),
                                         Expression.terminal("\\)")
                                 )
                         )

@@ -1,7 +1,10 @@
 package de.flogehring.jetpack.grammar;
 
+import de.flogehring.jetpack.util.Check;
+
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 
 public sealed interface Expression permits Symbol, Operator {
@@ -14,7 +17,34 @@ public sealed interface Expression permits Symbol, Operator {
         return new Operator.Sequence(first, second);
     }
 
+    static Expression sequence(List<Expression> expressions) {
+        // TODO create empty expression and return
+        Check.require(!expressions.isEmpty(), "Can't construct sequence from empty list");
+        if(expressions.size() == 1) {
+            return expressions.getFirst();
+        }
+        return sequence(expressions.getFirst(),
+                expressions.get(1), expressions.subList(2,expressions.size()).toArray(new Expression[]{})
+        );
+    }
+
+    static Expression orderedChoice(List<Expression> expressions) {
+        Check.require(!expressions.isEmpty(), "Can't construct ordered choice from empty list");
+        if(expressions.size() == 1) {
+            return expressions.getFirst();
+        }
+        return orderedChoice(
+                expressions.getFirst(),
+                expressions.get(1),
+                expressions.subList(2,expressions.size()).toArray(new Expression[]{})
+        );
+    }
+
     static Expression sequence(Expression first, Expression second, Expression... expressions) {
+        return applyOperatorInOrder(Operator.Sequence::new, first, second, expressions);
+    }
+
+    private static Expression applyOperatorInOrder(BinaryOperator<Expression> combiner, Expression first, Expression second, Expression[] expressions) {
         List<Expression> all = Stream.concat(
                 Stream.of(first, second),
                 Arrays.stream(expressions)
@@ -22,9 +52,9 @@ public sealed interface Expression permits Symbol, Operator {
         List<Expression> reversed = all.reversed();
         Expression last = reversed.getFirst();
         Expression secondLast = reversed.get(1);
-        Expression sequence = new Operator.Sequence(secondLast, last);
+        Expression sequence = combiner.apply(secondLast, last);
         for (int i = 2; i < reversed.size(); ++i) {
-            sequence = new Operator.Sequence(reversed.get(i), sequence);
+            sequence = combiner.apply(reversed.get(i), sequence);
         }
         return sequence;
     }
@@ -41,6 +71,11 @@ public sealed interface Expression permits Symbol, Operator {
         return new Symbol.Terminal(terminal);
     }
 
+    static Expression terminalLiteral(String terminal) {
+        Check.requireNotEmpty(terminal);
+        return new Symbol.Terminal(java.util.regex.Pattern.quote(terminal));
+    }
+
     static Expression orderedChoice(Expression firstChoice, Expression secondChoice) {
         return new Operator.OrderedChoice(
                 firstChoice,
@@ -48,11 +83,27 @@ public sealed interface Expression permits Symbol, Operator {
         );
     }
 
-    static Expression optional(Expression exp) {
-        return new Operator.Optional(exp);
+    static Expression orderedChoice(Expression firstChoice, Expression secondChoice, Expression ... nextChoices) {
+        return applyOperatorInOrder(Operator.OrderedChoice::new, firstChoice, secondChoice, nextChoices);
     }
 
-    static Expression plus(Expression exp) {
-        return new Operator.Plus(exp);
+    static Expression optional(Expression expression) {
+        return new Operator.Optional(expression);
+    }
+
+    static Expression plus(Expression expression) {
+        return new Operator.Plus(expression);
+    }
+
+    static Expression not(Expression expression) {
+        return new Operator.Not(expression);
+    }
+
+    static Expression and(Expression expression) {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    static Expression empty() {
+        throw new RuntimeException("Not Implemented yet");
     }
 }

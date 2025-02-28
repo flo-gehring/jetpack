@@ -2,9 +2,12 @@ package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.datatypes.Node;
+import de.flogehring.jetpack.datatypes.Tuple;
 import de.flogehring.jetpack.grammar.*;
 
+import java.text.MessageFormat;
 import java.util.List;
+import java.util.Optional;
 import java.util.Stack;
 import java.util.function.Function;
 
@@ -126,6 +129,9 @@ public class Evaluate {
             position = consumedExpression.parsePosition();
         } else {
             memoTable.insertFailure(key);
+            ans = Either.or(
+                    createError(parsingState, input)
+            );
         }
         parsingState.getCallStack().pop();
         if (!parsingState.isGrowState()
@@ -154,6 +160,32 @@ public class Evaluate {
                     List.of(Node.of(nonTerminal, consumed.parseTree()))
             ));
         }
+    }
+
+    private static String createError(ParsingState parsingState, Input input) {
+        MemoTable lookup = parsingState.getLookup();
+        Optional<MemoTableKey> highestSuccess = lookup.getHighestSuccess();
+        Optional<Integer> ruleOffset = highestSuccess.map(lookup::get).map(MemoTableLookup.Success.class::cast).map(MemoTableLookup.Success::offset);
+        Optional<Tuple<String, String>> parsedAndUnparsedInput = ruleOffset.map(
+                input::splitInput
+        );
+        return MessageFormat.format(
+                """
+                        Parsing Error:
+                            - Highest Parse {0}
+                            - Last Succesfull Rule: {1} at {2} -> {3}
+                            - Split Input into:
+                                        Parsed: {4}
+                                        Unparsed:  {5}
+                        """,
+                parsingState.getMaxPos(),
+                highestSuccess.map(MemoTableKey::name).orElse("No Match"),
+                highestSuccess.map(MemoTableKey::position).map(String::valueOf).orElse("n/a"),
+                ruleOffset.map(String::valueOf).orElse("n/a"),
+                parsedAndUnparsedInput.map(Tuple::first),
+                parsedAndUnparsedInput.map(Tuple::second)
+
+        );
     }
 
     private static Either<ConsumedExpression, String> growLr(

@@ -1,11 +1,11 @@
 package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Node;
+import de.flogehring.jetpack.datatypes.Tuple;
 import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.util.Check;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class MemoTable {
 
@@ -49,5 +49,12 @@ public class MemoTable {
 
         }
         return new MemoTableLookup.NoHit();
+    }
+
+    public Optional<MemoTableKey> getHighestSuccess() {
+        return lookupOffset.entrySet().stream()
+                .filter(entry -> entry.getValue() != -1)
+                .map(Map.Entry::getKey)
+                .max(Comparator.comparing(MemoTableKey::position));
     }
 }

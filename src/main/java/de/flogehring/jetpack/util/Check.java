@@ -18,11 +18,16 @@ public class Check {
         return map.containsKey(key);
     }
 
-    public static boolean checkNotNull(Object... objects) {
+    public static void requireNotNull(String message, Object... objects) {
         boolean result = true;
         for (Object o : objects) {
             result &= o != null;
         }
-        return result;
+        require(result, message);
+    }
+
+    public static void requireNotEmpty(String string) {
+        Check.require(string != null, "String can't be null");
+        Check.require(!string.isEmpty(), "String can't be empty");
     }
 }

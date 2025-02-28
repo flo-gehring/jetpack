@@ -1,5 +1,7 @@
 package de.flogehring.jetpack.datatypes;
 
+import de.flogehring.jetpack.grammar.Grammar;
+
 import java.util.function.Function;
 
 public sealed interface Either<T, S> {
@@ -17,6 +19,8 @@ public sealed interface Either<T, S> {
     }
 
     <U> Either<U, S> map(Function<T, U> f);
+
+    <U> Either<U, S> flatMap(Function<T, Either<U, S>> f);
 
     record This<T, S>(T t) implements Either<T, S> {
 
@@ -38,13 +42,18 @@ public sealed interface Either<T, S> {
         public S getOr() {
             throw new RuntimeException();
         }
+
+        @Override
+        public <U> Either<U, S> flatMap(Function<T, Either<U, S>> f) {
+            return f.apply(t);
+        }
     }
 
     record Or<T, S>(S s) implements Either<T, S> {
 
         @Override
         public T getEither() {
-            throw new RuntimeException("");
+            throw new RuntimeException("Tried to get Either bot was Or");
         }
 
         @Override
@@ -53,9 +62,13 @@ public sealed interface Either<T, S> {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public <U> Either<U, S> map(Function<T, U> f) {
-            return (Either<U, S>) this;
+            return Either.or(s);
+        }
+
+        @Override
+        public <U> Either<U, S> flatMap(Function<T, Either<U, S>> f) {
+            return Either.or(s);
         }
     }
 }
