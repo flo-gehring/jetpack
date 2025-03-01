@@ -8,7 +8,6 @@ import de.flogehring.jetpack.grammar.*;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
-import java.util.Stack;
 import java.util.function.Function;
 
 import static de.flogehring.jetpack.parse.EvaluateOperators.applyOperator;
@@ -83,22 +82,10 @@ public class Evaluate {
             Symbol.NonTerminal nonTerminal
     ) {
         final MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        final MemoTable memoTable = parsingState.getLookup();
-        final MemoTableLookup lookup = memoTable.get(key);
-        final Stack<Symbol.NonTerminal> callStack = parsingState.getCallStack();
-        boolean memoTableHit = !(lookup instanceof MemoTableLookup.NoHit);
-        if (memoTableHit && callStack.search(nonTerminal) != -1) {
-            return switch (lookup) {
-                case MemoTableLookup.Success(var offset, var parseTree, var _) -> Either.ofThis(
-                        new ConsumedExpression(offset, parseTree)
-                );
-                case MemoTableLookup.Fail(var _) -> Either.or("Previous Parsing Failure");
-                case MemoTableLookup.NoHit() -> throw new RuntimeException("Unreachable State");
-            };
-        }
-        return updateMemo(
-                nonTerminal, input, currentPosition, grammar, parsingState
-        );
+        final MemoTable<LookupTableEntry> memoTable = parsingState.getLookup();
+        final MemoTableLookup<LookupTableEntry> lookup = memoTable.get(key);
+        return Either.or("TODO");
+
     }
 
     private static Either<ConsumedExpression, String> updateMemo(
@@ -109,9 +96,9 @@ public class Evaluate {
             ParsingState parsingState
     ) {
         parsingState.getCallStack().push(nonTerminal);
-        MemoTable memoTable = parsingState.getLookup();
+        MemoTable<LookupTableEntry> memoTable = parsingState.getLookup();
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        MemoTableLookup lookup = memoTable.get(key);
+        MemoTableLookup<LookupTableEntry> lookup = memoTable.get(key);
         if (lookup instanceof MemoTableLookup.NoHit) {
             memoTable.insertFailure(key, false);
         }
@@ -122,14 +109,16 @@ public class Evaluate {
             if (parsingState.getMaxPos() < consumedExpression.parsePosition()) {
                 parsingState.setMaxPos(consumedExpression.parsePosition());
             }
-            memoTable.insertSuccess(key,
-                    consumedExpression.parsePosition(),
-                    consumedExpression.parseTree(),
-                    false
+            memoTable.insert(key,
+                    new LookupTableEntry.Success(
+                            consumedExpression.parsePosition(),
+                            consumedExpression.parseTree(),
+                            false
+                    )
             );
             position = consumedExpression.parsePosition();
         } else {
-            memoTable.insertFailure(key, false);
+            memoTable.insert(key, new LookupTableEntry.Fail(false));
             ans = Either.or(
                     createError(parsingState, input)
             );
@@ -166,10 +155,8 @@ public class Evaluate {
     private static String createError(ParsingState parsingState, Input input) {
         MemoTable lookup = parsingState.getLookup();
         Optional<MemoTableKey> highestSuccess = lookup.getHighestSuccess();
-        Optional<Integer> ruleOffset = highestSuccess.map(lookup::get).map(MemoTableLookup.Success.class::cast).map(MemoTableLookup.Success::offset);
-        Optional<Tuple<String, String>> parsedAndUnparsedInput = ruleOffset.map(
-                input::splitInput
-        );
+        int ruleOffset = parsingState.getMaxPos();
+        Tuple<String, String> parsedAndUnparsedInput = input.splitInput(ruleOffset);
         return MessageFormat.format(
                 """
                         Parsing Error:
@@ -182,9 +169,9 @@ public class Evaluate {
                 parsingState.getMaxPos(),
                 highestSuccess.map(MemoTableKey::name).orElse("No Match"),
                 highestSuccess.map(MemoTableKey::position).map(String::valueOf).orElse("n/a"),
-                ruleOffset.map(String::valueOf).orElse("n/a"),
-                parsedAndUnparsedInput.map(Tuple::first),
-                parsedAndUnparsedInput.map(Tuple::second)
+                ruleOffset,
+                parsedAndUnparsedInput.first(),
+                parsedAndUnparsedInput.second()
 
         );
     }
@@ -207,11 +194,13 @@ public class Evaluate {
         ));
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
         if (ans instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
-            parsingState.getLookup().insertSuccess(
+            parsingState.getLookup().insert(
                     key,
-                    consumedExpression.parsePosition(),
-                    consumedExpression.parseTree(),
-                    false
+                    new LookupTableEntry.Success(
+                            consumedExpression.parsePosition(),
+                            consumedExpression.parseTree(),
+                            false
+                    )
             );
             if (consumedExpression.parsePosition() <= currentPosition) {
                 ans = Either.or("No Progress made");
