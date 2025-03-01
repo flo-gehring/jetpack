@@ -89,10 +89,10 @@ public class Evaluate {
         boolean memoTableHit = !(lookup instanceof MemoTableLookup.NoHit);
         if (memoTableHit && callStack.search(nonTerminal) != -1) {
             return switch (lookup) {
-                case MemoTableLookup.Success(var offset, var parseTree) -> Either.ofThis(
+                case MemoTableLookup.Success(var offset, var parseTree, var _) -> Either.ofThis(
                         new ConsumedExpression(offset, parseTree)
                 );
-                case MemoTableLookup.Fail() -> Either.or("Previous Parsing Failure");
+                case MemoTableLookup.Fail(var _) -> Either.or("Previous Parsing Failure");
                 case MemoTableLookup.NoHit() -> throw new RuntimeException("Unreachable State");
             };
         }
@@ -113,7 +113,7 @@ public class Evaluate {
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
         MemoTableLookup lookup = memoTable.get(key);
         if (lookup instanceof MemoTableLookup.NoHit) {
-            memoTable.insertFailure(key);
+            memoTable.insertFailure(key, false);
         }
         Expression ruleDef = grammar.apply(nonTerminal);
         var ans = evaluateExpression(ruleDef, input, currentPosition, grammar, parsingState);
@@ -124,11 +124,12 @@ public class Evaluate {
             }
             memoTable.insertSuccess(key,
                     consumedExpression.parsePosition(),
-                    consumedExpression.parseTree()
+                    consumedExpression.parseTree(),
+                    false
             );
             position = consumedExpression.parsePosition();
         } else {
-            memoTable.insertFailure(key);
+            memoTable.insertFailure(key, false);
             ans = Either.or(
                     createError(parsingState, input)
             );
@@ -209,7 +210,8 @@ public class Evaluate {
             parsingState.getLookup().insertSuccess(
                     key,
                     consumedExpression.parsePosition(),
-                    consumedExpression.parseTree()
+                    consumedExpression.parseTree(),
+                    false
             );
             if (consumedExpression.parsePosition() <= currentPosition) {
                 ans = Either.or("No Progress made");

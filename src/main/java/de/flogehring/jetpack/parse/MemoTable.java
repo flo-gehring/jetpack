@@ -12,9 +12,12 @@ public class MemoTable {
     private final HashMap<MemoTableKey, Integer> lookupOffset;
     private final HashMap<MemoTableKey, List<Node<Symbol>>> lookupParseTree;
 
+    private final HashMap<MemoTableKey, LookupTableEntry> lookupTable;
+
     private MemoTable() {
         lookupOffset = new HashMap<>();
         lookupParseTree = new HashMap<>();
+        lookupTable = new HashMap<>();
     }
 
     public static MemoTable of() {
@@ -24,7 +27,8 @@ public class MemoTable {
     public void insertSuccess(
             MemoTableKey key,
             int offset,
-            List<Node<Symbol>> parseTree
+            List<Node<Symbol>> parseTree,
+            boolean growLr
     ) {
         Check.require(
                 offset > 0,
@@ -32,21 +36,23 @@ public class MemoTable {
         );
         lookupOffset.put(key, offset);
         lookupParseTree.put(key, parseTree);
+        lookupTable.put(key, new LookupTableEntry.Success(
+                offset, parseTree, growLr
+        ));
     }
 
-    public void insertFailure(MemoTableKey key) {
+    public void insertFailure(MemoTableKey key, boolean growLr) {
         lookupOffset.put(key, -1);
+        lookupTable.put(key, new LookupTableEntry.Fail(growLr));
     }
 
     public MemoTableLookup get(MemoTableKey key) {
-        if (lookupOffset.containsKey(key)) {
-            int offset = lookupOffset.get(key);
-            if (offset == -1) {
-                return new MemoTableLookup.Fail();
-            }
-            List<Node<Symbol>> parseTree = lookupParseTree.get(key);
-            return new MemoTableLookup.Success(offset, parseTree);
-
+        if (lookupTable.containsKey(key)) {
+            return switch (lookupTable.get(key)) {
+                case LookupTableEntry.Success(var offset, var parseTree, var growLr) ->
+                    new MemoTableLookup.Success(offset, parseTree, growLr);
+                case LookupTableEntry.Fail(var growLr) -> new MemoTableLookup.Fail(growLr);
+            };
         }
         return new MemoTableLookup.NoHit();
     }

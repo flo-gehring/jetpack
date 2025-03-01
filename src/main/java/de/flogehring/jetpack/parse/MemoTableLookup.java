@@ -10,9 +10,9 @@ public sealed interface MemoTableLookup {
     record NoHit() implements MemoTableLookup {
     }
 
-    record Fail() implements MemoTableLookup {
+    record Fail(boolean growLeftRecursion) implements MemoTableLookup {
     }
 
-    record Success(int offset, List<Node<Symbol>> parseTree) implements MemoTableLookup {
+    record Success(int offset, List<Node<Symbol>> parseTree, boolean growLeftRecursion) implements MemoTableLookup {
     }
 }
