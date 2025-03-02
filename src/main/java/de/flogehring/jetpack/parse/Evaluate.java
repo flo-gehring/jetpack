@@ -310,7 +310,6 @@ public class Evaluate {
         MemoTableLookup<LookupTableEntry> previousLookup = parsingState.getLookup().get(key);
         int previousLookupParsePosition = getPreviousLookupParsePositionOrDefault(currentPosition, previousLookup);
         if (answer instanceof Either.Or<ConsumedExpression, String>) {
-
             answer = getAnswerFromPreviousLookupGrowLr(previousLookup);
         } else if (answer instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
             if (consumedExpression.parsePosition() <= previousLookupParsePosition) {

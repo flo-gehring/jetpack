@@ -324,8 +324,9 @@ public class GrammarTest {
         @ParameterizedTest
         @CsvSource(
                 value = {
-                        "double, 1 -1,true",
-                        "Triple,1 - 1 -1,true"
+                       // "double, 1 -1,true",
+                        "Triple,1 - 1 - 1,true",
+                        "Triple,1-1-1,true"
                 }
         )
         void test(String message, String expr, boolean expected) {

@@ -218,9 +218,11 @@ public class Grammar {
             if (consumedExpression.parsePosition() == input.length()) {
                 return consume;
             }
+            String errorMessage = "Could only match " + consumedExpression.parsePosition() +
+                    " of " + input.length() + " characters";
+            System.out.println(errorMessage);
             return Either.or(
-                    "Could only match " + consumedExpression.parsePosition() +
-                            " of " + input.length() + " characters"
+                    errorMessage
             );
         } else {
             return consume;
