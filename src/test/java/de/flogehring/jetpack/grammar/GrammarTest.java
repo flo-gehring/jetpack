@@ -277,7 +277,6 @@ public class GrammarTest {
             }
 
             @Test
-            @Disabled
             void dalmatiansReversedParseFailure() {
                 assertInstanceOf(Either.This.class, grammar.parse("1 + 100"));
             }
@@ -307,7 +306,6 @@ public class GrammarTest {
 
     @Nested
     class IndirectLeftRecursion {
-
         Grammar grammar = new Grammar(
                 "x",
                 Map.of(
