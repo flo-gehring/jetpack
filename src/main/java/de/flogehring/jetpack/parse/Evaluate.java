@@ -1,18 +1,21 @@
 package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
-import de.flogehring.jetpack.datatypes.Node;
-import de.flogehring.jetpack.datatypes.Tuple;
 import de.flogehring.jetpack.grammar.*;
 
-import java.text.MessageFormat;
-import java.util.List;
-import java.util.Optional;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 
 import static de.flogehring.jetpack.parse.EvaluateOperators.applyOperator;
 import static de.flogehring.jetpack.parse.EvaluateTerminal.applyTerminal;
 
+/**
+ * This class is capable of evaluating left recursive parsing expression grammars (PEG).
+ * It follows the proposed method of
+ * <a href="https://www.jstage.jst.go.jp/article/ipsjjip/29/0/29_174/_pdf"> Umeda and Maeda Paper "Packrat Parsers Can Support Multiple Left-recursive
+ * Calls at the Same Position"</a>
+ */
 public class Evaluate {
 
     private Evaluate() {
@@ -23,7 +26,7 @@ public class Evaluate {
             String startingRule,
             Function<Symbol.NonTerminal, Expression> grammar
     ) {
-        return evaluateExpression(
+        return evaluateExpressionWithApplyRule(
                 Expression.nonTerminal(startingRule),
                 input,
                 0,
@@ -32,7 +35,7 @@ public class Evaluate {
         );
     }
 
-    private static Either<ConsumedExpression, String> evaluateExpression(
+    private static Either<ConsumedExpression, String> evaluateExpressionWithApplyRule(
             Expression expression,
             Input input,
             int currentPosition,
@@ -46,7 +49,7 @@ public class Evaluate {
                     currentPosition,
                     createEvaluatorWithApplyRule(grammar, parsingState)
             );
-            case Symbol sym -> applySymbol(
+            case Symbol sym -> applySymbolNonRecursive(
                     sym,
                     input,
                     currentPosition,
@@ -56,7 +59,7 @@ public class Evaluate {
         };
     }
 
-    private static Either<ConsumedExpression, String> applySymbol(
+    private static Either<ConsumedExpression, String> applySymbolNonRecursive(
             Symbol symbol,
             Input input,
             int currentPosition, Function<Symbol.NonTerminal, Expression> grammar,
@@ -84,96 +87,74 @@ public class Evaluate {
         final MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
         final MemoTable<LookupTableEntry> memoTable = parsingState.getLookup();
         final MemoTableLookup<LookupTableEntry> lookup = memoTable.get(key);
-        return Either.or("TODO");
-
+        return switch (lookup) {
+            case MemoTableLookup.NoHit<LookupTableEntry>() -> {
+                memoTable.insert(key, new LookupTableEntry.Fail(false));
+                Expression ruleDef = grammar.apply(nonTerminal);
+                Either<ConsumedExpression, String> answer = evaluateExpressionWithApplyRule(
+                        ruleDef,
+                        input,
+                        currentPosition,
+                        grammar,
+                        parsingState
+                );
+                updateState(key, answer, parsingState);
+                LookupTableEntry m = ((MemoTableLookup.Hit<LookupTableEntry>) memoTable.get(key)).value();
+                if (m.growLr()) {
+                    answer = growLr(
+                            nonTerminal,
+                            input,
+                            currentPosition,
+                            grammar,
+                            parsingState
+                    );
+                    updateState(key, answer, parsingState);
+                }
+                yield answer;
+            }
+            case MemoTableLookup.Hit<LookupTableEntry>(var entry) -> {
+                Either<ConsumedExpression, String> answer;
+                if (entry instanceof LookupTableEntry.Fail(var _)) {
+                    memoTable.insert(key, new LookupTableEntry.MisMatch(
+                            true
+                    ));
+                    answer = Either.or("Detected Left recursion");
+                } else {
+                    answer = switch (entry) {
+                        case LookupTableEntry.MisMatch _ -> Either.or("Previous parsing failure");
+                        case LookupTableEntry.Match(var parsePosition, var tree, var _) ->
+                                Either.ofThis(new ConsumedExpression(parsePosition, tree));
+                        case LookupTableEntry.Fail ignored -> throw new RuntimeException();
+                    };
+                }
+                yield answer;
+            }
+        };
     }
 
-    private static Either<ConsumedExpression, String> updateMemo(
-            Symbol.NonTerminal nonTerminal,
-            Input input,
-            int currentPosition,
-            Function<Symbol.NonTerminal, Expression> grammar,
+    private static void updateState(
+            MemoTableKey key,
+            Either<ConsumedExpression, String> answer,
             ParsingState parsingState
     ) {
-        parsingState.getCallStack().push(nonTerminal);
-        MemoTable<LookupTableEntry> memoTable = parsingState.getLookup();
-        MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        MemoTableLookup<LookupTableEntry> lookup = memoTable.get(key);
-        if (lookup instanceof MemoTableLookup.NoHit) {
-            memoTable.insertFailure(key, false);
-        }
-        Expression ruleDef = grammar.apply(nonTerminal);
-        var ans = evaluateExpression(ruleDef, input, currentPosition, grammar, parsingState);
-        int position = currentPosition;
-        if (ans instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
-            if (parsingState.getMaxPos() < consumedExpression.parsePosition()) {
+        MemoTable<LookupTableEntry> lookup = parsingState.getLookup();
+        LookupTableEntry entry = ((MemoTableLookup.Hit<LookupTableEntry>) lookup.get(key)).value();
+        switch (answer) {
+            case Either.This<ConsumedExpression, String>(var consumedExpression) -> {
+                lookup.insert(
+                        key,
+                        new LookupTableEntry.Match(
+                                consumedExpression.parsePosition(),
+                                consumedExpression.parseTree(),
+                                entry.growLr()
+                        )
+                );
                 parsingState.setMaxPos(consumedExpression.parsePosition());
             }
-            memoTable.insert(key,
-                    new LookupTableEntry.Success(
-                            consumedExpression.parsePosition(),
-                            consumedExpression.parseTree(),
-                            false
-                    )
-            );
-            position = consumedExpression.parsePosition();
-        } else {
-            memoTable.insert(key, new LookupTableEntry.Fail(false));
-            ans = Either.or(
-                    createError(parsingState, input)
+            case Either.Or<ConsumedExpression, String>(var _) -> lookup.insert(
+                    key, new LookupTableEntry.MisMatch(entry.growLr())
             );
         }
-        parsingState.getCallStack().pop();
-        if (!parsingState.isGrowState()
-                && parsingState.getCallStack().empty()
-                && position < input.length()
-        ) {
-            while (true) {
-                ans = growLr(
-                        nonTerminal, input, currentPosition, grammar, parsingState
-                );
-                if (ans instanceof Either.Or<ConsumedExpression, String>) {
-                    break;
-                }
-                if (ans instanceof Either.This<ConsumedExpression, String>(
-                        var consumedExpression
-                )) {
-                    if (consumedExpression.parsePosition() >= input.length()) break;
-                    if (position >= parsingState.getMaxPos()) break;
-                    position = consumedExpression.parsePosition();
-                }
-            }
-            return ans;
-        } else {
-            return ans.map(consumed -> new ConsumedExpression(
-                    consumed.parsePosition(),
-                    List.of(Node.of(nonTerminal, consumed.parseTree()))
-            ));
-        }
-    }
-
-    private static String createError(ParsingState parsingState, Input input) {
-        MemoTable lookup = parsingState.getLookup();
-        Optional<MemoTableKey> highestSuccess = lookup.getHighestSuccess();
-        int ruleOffset = parsingState.getMaxPos();
-        Tuple<String, String> parsedAndUnparsedInput = input.splitInput(ruleOffset);
-        return MessageFormat.format(
-                """
-                        Parsing Error:
-                            - Highest Parse {0}
-                            - Last Succesfull Rule: {1} at {2} -> {3}
-                            - Split Input into:
-                                        Parsed: {4}
-                                        Unparsed:  {5}
-                        """,
-                parsingState.getMaxPos(),
-                highestSuccess.map(MemoTableKey::name).orElse("No Match"),
-                highestSuccess.map(MemoTableKey::position).map(String::valueOf).orElse("n/a"),
-                ruleOffset,
-                parsedAndUnparsedInput.first(),
-                parsedAndUnparsedInput.second()
-
-        );
     }
 
     private static Either<ConsumedExpression, String> growLr(
@@ -183,39 +164,188 @@ public class Evaluate {
             Function<Symbol.NonTerminal, Expression> grammar,
             ParsingState parsingState
     ) {
-        parsingState.getCallStack().push(nonTerminal);
-        parsingState.setGrowState(true);
         Expression exp = grammar.apply(nonTerminal);
-        Either<ConsumedExpression, String> ans = evaluateExpression(exp, input, currentPosition, grammar, parsingState);
-        ans = ans.map(consumedExpression -> new ConsumedExpression(
-                consumedExpression.parsePosition(), List.of(
-                Node.of(nonTerminal, consumedExpression.parseTree())
-        )
-        ));
+        Either<ConsumedExpression, String> answer;
         MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        if (ans instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
-            parsingState.getLookup().insert(
-                    key,
-                    new LookupTableEntry.Success(
-                            consumedExpression.parsePosition(),
-                            consumedExpression.parseTree(),
-                            false
-                    )
+
+        while (true) {
+            int oldPosition = parsingState.getMaxPos();
+            parsingState.setMaxPos(currentPosition);
+            HashSet<Symbol.NonTerminal> limits = new HashSet<>();
+            limits.add(nonTerminal);
+            answer = evalGrow(
+                    exp,
+                    input,
+                    currentPosition,
+                    grammar,
+                    parsingState,
+                    limits
             );
-            if (consumedExpression.parsePosition() <= currentPosition) {
-                ans = Either.or("No Progress made");
+            if (answer instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
+                if (consumedExpression.parsePosition() <= oldPosition) break;
+            } else if (answer instanceof Either.Or<ConsumedExpression, String>) break;
+            updateState(new MemoTableKey(nonTerminal.name(), currentPosition), answer, parsingState);
+        }
+        return answer;
+    }
+
+    private static Either<ConsumedExpression, String> evalGrow(
+            Expression exp,
+            Input input,
+            int currentPosition,
+            Function<Symbol.NonTerminal, Expression> grammar,
+            ParsingState parsingState,
+            Set<Symbol.NonTerminal> limits
+    ) {
+        ExpressionEvaluator evalGrowEvaluator = getEvalGrowEvaluator(
+                limits,
+                parsingState,
+                grammar,
+                currentPosition
+        );
+        return evalGrowEvaluator.resolveExpression(
+                exp,
+                input,
+                currentPosition
+        );
+    }
+
+    private static ExpressionEvaluator getEvalGrowEvaluator(
+            Set<Symbol.NonTerminal> limits,
+            ParsingState parsingState,
+            Function<Symbol.NonTerminal, Expression> grammar,
+            int startingPositionForEvalGrowCall
+    ) {
+        return (expression, input1, currentPosition1) ->
+                switch (expression) {
+                    case Operator op -> EvaluateOperators.applyOperator(
+                            op,
+                            input1,
+                            currentPosition1,
+                            getEvalGrowEvaluator(limits, parsingState, grammar, startingPositionForEvalGrowCall)
+
+                    );
+                    case Symbol s -> switch (s) {
+                        case Symbol.Terminal(var t) -> EvaluateTerminal.applyTerminal(
+                                t,
+                                input1,
+                                currentPosition1
+                        );
+                        case Symbol.NonTerminal current -> evalGrowNonTerminal(
+                                input1,
+                                current,
+                                currentPosition1,
+                                limits,
+                                parsingState,
+                                grammar,
+                                startingPositionForEvalGrowCall
+                        );
+                    };
+                };
+    }
+
+    private static Either<ConsumedExpression, String> evalGrowNonTerminal(
+            Input input,
+            Symbol.NonTerminal current,
+            int currentPosition,
+            Set<Symbol.NonTerminal> limits,
+            ParsingState parsingState,
+            Function<Symbol.NonTerminal, Expression> grammar,
+            int startingPositionForEvalGrowCall
+    ) {
+        if (currentPosition == startingPositionForEvalGrowCall && !limits.contains(current)) {
+            return applyRuleGrowRecursive(
+                    input,
+                    current,
+                    limits,
+                    currentPosition,
+                    grammar,
+                    parsingState
+            );
+        } else {
+            return applyRule(
+                    input,
+                    currentPosition,
+                    grammar,
+                    parsingState,
+                    current
+            );
+        }
+    }
+
+    private static Either<ConsumedExpression, String> applyRuleGrowRecursive(
+            Input input,
+            Symbol.NonTerminal nonTerminal,
+            Set<Symbol.NonTerminal> limits,
+            int currentPosition,
+            Function<Symbol.NonTerminal, Expression> grammar,
+            ParsingState parsingState
+    ) {
+        limits.add(nonTerminal);
+        Expression ruleDef = grammar.apply(nonTerminal);
+        Either<ConsumedExpression, String> answer = evalGrow(
+                ruleDef,
+                input,
+                currentPosition,
+                grammar,
+                parsingState,
+                limits
+        );
+        MemoTableKey key = new MemoTableKey(
+                nonTerminal.name(),
+                currentPosition
+        );
+        MemoTableLookup<LookupTableEntry> previousLookup = parsingState.getLookup().get(key);
+        int previousLookupParsePosition = getPreviousLookupParsePositionOrDefault(currentPosition, previousLookup);
+        if (answer instanceof Either.Or<ConsumedExpression, String>) {
+
+            answer = getAnswerFromPreviousLookupGrowLr(previousLookup);
+        } else if (answer instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
+            if (consumedExpression.parsePosition() <= previousLookupParsePosition) {
+                answer = getAnswerFromPreviousLookupGrowLr(previousLookup);
+            } else {
+                updateState(
+                        key,
+                        answer,
+                        parsingState
+                );
             }
         }
-        parsingState.setGrowState(false);
-        parsingState.getCallStack().pop();
-        return ans;
+        return answer;
+    }
+
+    private static int getPreviousLookupParsePositionOrDefault(
+            int defaultPosition,
+            MemoTableLookup<LookupTableEntry> previousLookup
+    ) {
+        return switch (previousLookup) {
+            case MemoTableLookup.NoHit<LookupTableEntry> _ -> defaultPosition;
+            case MemoTableLookup.Hit<LookupTableEntry> hit -> switch (hit.value()) {
+                case LookupTableEntry.Match(var parsePosition, var _, var _) -> parsePosition;
+                default -> defaultPosition;
+            };
+        };
+    }
+
+    private static Either<ConsumedExpression, String> getAnswerFromPreviousLookupGrowLr(MemoTableLookup<LookupTableEntry> previousLookup) {
+        return switch (previousLookup) {
+            case MemoTableLookup.NoHit<LookupTableEntry> _ -> Either.or("No Previous hit");
+            case MemoTableLookup.Hit<LookupTableEntry>(var entry) -> switch (entry) {
+                case LookupTableEntry.Match(int parsePosition, var parseTree, var _) -> Either.ofThis(
+                        new ConsumedExpression(parsePosition, parseTree)
+                );
+                case LookupTableEntry.Fail _, LookupTableEntry.MisMatch _ -> Either.or(
+                        "Previous parsing failure"
+                );
+            };
+        };
     }
 
     private static ExpressionEvaluator createEvaluatorWithApplyRule(
             Function<Symbol.NonTerminal, Expression> grammar,
             ParsingState parsingState
     ) {
-        return (expression, input, currentPosition) -> evaluateExpression(
+        return (expression, input, currentPosition) -> evaluateExpressionWithApplyRule(
                 expression,
                 input,
                 currentPosition,
