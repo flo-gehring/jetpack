@@ -289,16 +289,22 @@ public class GrammarTest {
                                 createTree(
                                         List.of("Expr"),
                                         List.of(createTree(
-                                                List.of("Num"),
-                                                List.of(
-                                                        createTree(List.of("Digit"), List.of(terminalLeaf("1"))),
-                                                        createTree(List.of("Digit"), List.of(terminalLeaf("0"))),
-                                                        createTree(List.of("Digit"), List.of(terminalLeaf("0")))
-                                                )))
-                                ),
-                                terminalLeaf("+"),
-                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1")))
-                        ));
+                                                        List.of("Num"),
+                                                        List.of(createTree(
+                                                                List.of("Num"),
+                                                                List.of(
+                                                                        createTree(
+                                                                                List.of("Num"),
+                                                                                List.of(
+                                                                                        createTree(List.of("Digit"), List.of(terminalLeaf("1"))),
+                                                                                        createTree(List.of("Digit"), List.of(terminalLeaf("0"))))
+                                                                        ),
+                                                                        createTree(List.of("Digit"), List.of(terminalLeaf("0")))
+                                                                )))
+                                                ),
+                                                terminalLeaf("+"),
+                                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1")))
+                                        ))));
                 assertEquals(expected, grammar.parse("100 + 1").getEither());
             }
         }
@@ -322,7 +328,7 @@ public class GrammarTest {
         @ParameterizedTest
         @CsvSource(
                 value = {
-                       // "double, 1 -1,true",
+                        // "double, 1 -1,true",
                         "Triple,1 - 1 - 1,true",
                         "Triple,1-1-1,true"
                 }
