@@ -51,8 +51,8 @@ public class Grammar {
                 "Grammar",
                 grammarGrammar
         );
-        Either<ConsumedExpression, String> consumedExpressionStringEither = parsingGrammar.parseString(grammarDefinition);
-        return consumedExpressionStringEither.flatMap(Grammar::createGrammar);
+        Either<ConsumedExpression, String> parsedGrammarDefinition = parsingGrammar.parseString(grammarDefinition);
+        return parsedGrammarDefinition.flatMap(Grammar::createGrammar);
     }
 
     private static Either<Grammar, String> createGrammar(ConsumedExpression consumedExpression) {

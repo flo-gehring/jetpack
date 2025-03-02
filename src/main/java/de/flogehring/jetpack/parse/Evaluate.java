@@ -1,9 +1,11 @@
 package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
+import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.*;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -110,7 +112,12 @@ public class Evaluate {
                     );
                     updateState(key, answer, parsingState);
                 }
-                yield answer;
+                yield answer.map(
+                        consumedExpression -> new ConsumedExpression(
+                                consumedExpression.parsePosition(),
+                                List.of(Node.of(nonTerminal, consumedExpression.parseTree()))
+                        )
+                );
             }
             case MemoTableLookup.Hit<LookupTableEntry>(var entry) -> {
                 Either<ConsumedExpression, String> answer;
@@ -127,7 +134,11 @@ public class Evaluate {
                         case LookupTableEntry.Fail ignored -> throw new RuntimeException();
                     };
                 }
-                yield answer;
+                yield answer.map(
+                        consumedExpression -> new ConsumedExpression(
+                                consumedExpression.parsePosition(),
+                                List.of(Node.of(nonTerminal, consumedExpression.parseTree()))
+                        ));
             }
         };
     }
@@ -165,15 +176,14 @@ public class Evaluate {
             ParsingState parsingState
     ) {
         Expression exp = grammar.apply(nonTerminal);
-        Either<ConsumedExpression, String> answer;
-        MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-
+        Either<ConsumedExpression, String> answer = Either.or(
+                "Unable to evaluate recursive call at " + currentPosition
+        );
+        HashSet<Symbol.NonTerminal> limits = new HashSet<>(List.of(nonTerminal));
+        int oldPosition = currentPosition;
         while (true) {
-            int oldPosition = parsingState.getMaxPos();
-            parsingState.setMaxPos(currentPosition);
-            HashSet<Symbol.NonTerminal> limits = new HashSet<>();
-            limits.add(nonTerminal);
-            answer = evalGrow(
+
+            Either<ConsumedExpression, String> currentAnswer = evalGrow(
                     exp,
                     input,
                     currentPosition,
@@ -181,10 +191,12 @@ public class Evaluate {
                     parsingState,
                     limits
             );
-            if (answer instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
+            if (currentAnswer instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
                 if (consumedExpression.parsePosition() <= oldPosition) break;
-            } else if (answer instanceof Either.Or<ConsumedExpression, String>) break;
-            updateState(new MemoTableKey(nonTerminal.name(), currentPosition), answer, parsingState);
+                oldPosition = consumedExpression.parsePosition();
+            } else if (currentAnswer instanceof Either.Or<ConsumedExpression, String>) break;
+            updateState(new MemoTableKey(nonTerminal.name(), currentPosition), currentAnswer, parsingState);
+            answer = currentAnswer;
         }
         return answer;
     }
