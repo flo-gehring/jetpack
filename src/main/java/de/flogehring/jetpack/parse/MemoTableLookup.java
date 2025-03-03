@@ -1,18 +1,10 @@
 package de.flogehring.jetpack.parse;
 
-import de.flogehring.jetpack.datatypes.Node;
-import de.flogehring.jetpack.grammar.Symbol;
+public sealed interface MemoTableLookup<T> {
 
-import java.util.List;
-
-public sealed interface MemoTableLookup {
-
-    record NoHit() implements MemoTableLookup {
+    record NoHit<T>() implements MemoTableLookup<T> {
     }
 
-    record Fail() implements MemoTableLookup {
-    }
-
-    record Success(int offset, List<Node<Symbol>> parseTree) implements MemoTableLookup {
+    record Hit<T>(T value) implements MemoTableLookup<T> {
     }
 }

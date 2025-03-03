@@ -51,8 +51,8 @@ public class Grammar {
                 "Grammar",
                 grammarGrammar
         );
-        Either<ConsumedExpression, String> consumedExpressionStringEither = parsingGrammar.parseString(grammarDefinition);
-        return consumedExpressionStringEither.flatMap(Grammar::createGrammar);
+        Either<ConsumedExpression, String> parsedGrammarDefinition = parsingGrammar.parseString(grammarDefinition);
+        return parsedGrammarDefinition.flatMap(Grammar::createGrammar);
     }
 
     private static Either<Grammar, String> createGrammar(ConsumedExpression consumedExpression) {
@@ -218,9 +218,11 @@ public class Grammar {
             if (consumedExpression.parsePosition() == input.length()) {
                 return consume;
             }
+            String errorMessage = "Could only match " + consumedExpression.parsePosition() +
+                    " of " + input.length() + " characters";
+            System.out.println(errorMessage);
             return Either.or(
-                    "Could only match " + consumedExpression.parsePosition() +
-                            " of " + input.length() + " characters"
+                    errorMessage
             );
         } else {
             return consume;

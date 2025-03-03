@@ -3,7 +3,6 @@ package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.datatypes.Node;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -13,6 +12,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.List;
 import java.util.Map;
 
+import static de.flogehring.jetpack.grammar.Expression.*;
 import static de.flogehring.jetpack.grammar.ParseTreeBuilder.createTree;
 import static de.flogehring.jetpack.grammar.ParseTreeBuilder.terminalLeaf;
 import static org.junit.jupiter.api.Assertions.*;
@@ -127,45 +127,45 @@ public class GrammarTest {
         Grammar testGrammar = new Grammar(
                 "Expr",
                 Map.of(
-                        "Expr", Expression.nonTerminal("Sum"),
-                        "Sum", Expression.sequence(
-                                Expression.nonTerminal("Product"),
+                        "Expr", nonTerminal("Sum"),
+                        "Sum", sequence(
+                                nonTerminal("Product"),
                                 Expression.star(Expression.group(
-                                        Expression.sequence(
-                                                Expression.group(Expression.orderedChoice(
-                                                        Expression.terminal("\\+"),
-                                                        Expression.terminal("-")
+                                        sequence(
+                                                Expression.group(orderedChoice(
+                                                        terminal("\\+"),
+                                                        terminal("-")
                                                 )),
-                                                Expression.nonTerminal("Product")
+                                                nonTerminal("Product")
                                         )
                                 ))),
-                        "Product", Expression.sequence(
-                                Expression.nonTerminal("Power"),
+                        "Product", sequence(
+                                nonTerminal("Power"),
                                 Expression.star(Expression.group(
-                                        Expression.sequence(
-                                                Expression.group(Expression.orderedChoice(
-                                                        Expression.terminal("\\*"),
-                                                        Expression.terminal("/")
+                                        sequence(
+                                                Expression.group(orderedChoice(
+                                                        terminal("\\*"),
+                                                        terminal("/")
                                                 )),
-                                                Expression.nonTerminal("Power")
+                                                nonTerminal("Power")
                                         )
                                 ))),
-                        "Power", Expression.sequence(
-                                Expression.nonTerminal(
+                        "Power", sequence(
+                                nonTerminal(
                                         "Value"
                                 ),
                                 Expression.optional(
                                         Expression.group(
-                                                Expression.sequence(Expression.terminal("\\^"), Expression.nonTerminal("Power"))
+                                                sequence(terminal("\\^"), nonTerminal("Power"))
                                         )
                                 )
                         ),
-                        "Value", Expression.orderedChoice(
-                                Expression.terminal("[0-9]+"),
-                                Expression.sequence(
-                                        Expression.terminal("\\("),
-                                        Expression.nonTerminal("Expr"),
-                                        Expression.terminal("\\)")
+                        "Value", orderedChoice(
+                                terminal("[0-9]+"),
+                                sequence(
+                                        terminal("\\("),
+                                        nonTerminal("Expr"),
+                                        terminal("\\)")
                                 )
                         )
                 )
@@ -178,19 +178,19 @@ public class GrammarTest {
         Grammar grammar = new Grammar(
                 "expr",
                 Map.of(
-                        "expr", Expression.orderedChoice(
-                                Expression.sequence(
-                                        Expression.nonTerminal(
+                        "expr", orderedChoice(
+                                sequence(
+                                        nonTerminal(
                                                 "expr"
                                         ),
-                                        Expression.sequence(
-                                                Expression.terminal("-"),
-                                                Expression.nonTerminal("num")
+                                        sequence(
+                                                terminal("-"),
+                                                nonTerminal("num")
                                         )
                                 ),
-                                Expression.nonTerminal("num")
+                                nonTerminal("num")
                         ),
-                        "num", Expression.terminal("[0-9]+")
+                        "num", terminal("[0-9]+")
                 )
         );
 
@@ -230,24 +230,24 @@ public class GrammarTest {
         Grammar grammar = new Grammar(
                 "Expr",
                 Map.of(
-                        "Expr", Expression.orderedChoice(
-                                Expression.sequence(
-                                        Expression.nonTerminal("Expr"),
-                                        Expression.sequence(
-                                                Expression.terminal("\\+"),
-                                                Expression.nonTerminal("Num"))
+                        "Expr", orderedChoice(
+                                sequence(
+                                        nonTerminal("Expr"),
+                                        sequence(
+                                                terminal("\\+"),
+                                                nonTerminal("Num"))
                                 ),
-                                Expression.nonTerminal("Num")
+                                nonTerminal("Num")
 
                         ),
-                        "Num", Expression.orderedChoice(
-                                Expression.sequence(
-                                        Expression.nonTerminal("Num"),
-                                        Expression.nonTerminal("Digit")
+                        "Num", orderedChoice(
+                                sequence(
+                                        nonTerminal("Num"),
+                                        nonTerminal("Digit")
                                 ),
-                                Expression.nonTerminal("Digit")
+                                nonTerminal("Digit")
                         ),
-                        "Digit", Expression.terminal("[0-9]")
+                        "Digit", terminal("[0-9]")
                 )
         );
 
@@ -268,7 +268,7 @@ public class GrammarTest {
                 Node<Symbol> expected = createTree(
                         List.of("Expr"),
                         List.of(
-                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1"))),
+                                createTree(List.of("Expr", "Num", "Digit"), List.of(terminalLeaf("1"))),
                                 terminalLeaf("+"),
                                 createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1")))
                         )
@@ -277,7 +277,6 @@ public class GrammarTest {
             }
 
             @Test
-            @Disabled
             void dalmatiansReversedParseFailure() {
                 assertInstanceOf(Either.This.class, grammar.parse("1 + 100"));
             }
@@ -289,17 +288,17 @@ public class GrammarTest {
                         List.of(
                                 createTree(
                                         List.of("Expr"),
-                                        List.of(createTree(
-                                                List.of("Num"),
-                                                List.of(
-                                                        createTree(List.of("Digit"), List.of(terminalLeaf("1"))),
-                                                        createTree(List.of("Digit"), List.of(terminalLeaf("0"))),
-                                                        createTree(List.of("Digit"), List.of(terminalLeaf("0")))
-                                                )))
-                                ),
+                                        List.of(createTree(List.of("Num"),
+                                                        List.of(createTree(List.of("Num"),
+                                                                        List.of(createTree(
+                                                                                        List.of("Num"),
+                                                                                        List.of(createTree(List.of("Digit"), List.of(terminalLeaf("1"))))),
+                                                                                createTree(List.of("Digit"), List.of(terminalLeaf("0"))))),
+                                                                createTree(List.of("Digit"), List.of(terminalLeaf("0"))))
+                                                )
+                                        )),
                                 terminalLeaf("+"),
-                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1")))
-                        ));
+                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1")))));
                 assertEquals(expected, grammar.parse("100 + 1").getEither());
             }
         }
@@ -307,25 +306,29 @@ public class GrammarTest {
 
     @Nested
     class IndirectLeftRecursion {
-
         Grammar grammar = new Grammar(
                 "x",
                 Map.of(
-                        "x", Expression.nonTerminal("expr"),
-                        "expr", Expression.orderedChoice(
-                                Expression.sequence(Expression.nonTerminal("x"), Expression.sequence(Expression.terminal("-"), Expression.nonTerminal("num"))
+                        "x", nonTerminal("expr"),
+                        "expr", orderedChoice(
+                                sequence(
+                                        nonTerminal("x"), sequence(terminal("-"), nonTerminal("num"))
                                 ),
-                                Expression.nonTerminal("num")
+                                nonTerminal("num")
                         ),
-                        "num", Expression.terminal("[0-9]+")
+                        "num", terminal("[0-9]+")
                 )
         );
 
         @ParameterizedTest
         @CsvSource(
                 value = {
+                        "single,1,true",
                         "double, 1 -1,true",
-                        "Triple,1 - 1 -1,true"
+                        "double mixed length numbers, 1 -21,true",
+                        "Triple,1-1-1,true",
+                        "Triple differently spaced,1 - 1 - 1,true",
+                        "Triple mixed numbers,12-14-1123-1-2,true"
                 }
         )
         void test(String message, String expr, boolean expected) {

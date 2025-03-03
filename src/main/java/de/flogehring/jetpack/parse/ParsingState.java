@@ -14,7 +14,7 @@ public class ParsingState {
     private final Stack<Symbol.NonTerminal> callStack;
     @Setter
     private boolean growState;
-    private final MemoTable lookup;
+    private final MemoTable<LookupTableEntry> lookup;
 
     private ParsingState() {
         lookup = MemoTable.of();

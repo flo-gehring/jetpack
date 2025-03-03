@@ -1,60 +1,32 @@
 package de.flogehring.jetpack.parse;
 
-import de.flogehring.jetpack.datatypes.Node;
-import de.flogehring.jetpack.datatypes.Tuple;
-import de.flogehring.jetpack.grammar.Symbol;
-import de.flogehring.jetpack.util.Check;
-
 import java.util.*;
 
-public class MemoTable {
+public class MemoTable<T> {
 
-    private final HashMap<MemoTableKey, Integer> lookupOffset;
-    private final HashMap<MemoTableKey, List<Node<Symbol>>> lookupParseTree;
+    private final HashMap<MemoTableKey, T> lookupTable;
 
     private MemoTable() {
-        lookupOffset = new HashMap<>();
-        lookupParseTree = new HashMap<>();
+        lookupTable = new HashMap<>();
     }
 
-    public static MemoTable of() {
-        return new MemoTable();
+    public static <T> MemoTable<T> of() {
+        return new MemoTable<>();
     }
 
-    public void insertSuccess(
-            MemoTableKey key,
-            int offset,
-            List<Node<Symbol>> parseTree
-    ) {
-        Check.require(
-                offset > 0,
-                "MemoTable offset can't be smaller than 0"
-        );
-        lookupOffset.put(key, offset);
-        lookupParseTree.put(key, parseTree);
+    public void insert(MemoTableKey key, T value) {
+        lookupTable.put(key, value);
     }
 
-    public void insertFailure(MemoTableKey key) {
-        lookupOffset.put(key, -1);
-    }
-
-    public MemoTableLookup get(MemoTableKey key) {
-        if (lookupOffset.containsKey(key)) {
-            int offset = lookupOffset.get(key);
-            if (offset == -1) {
-                return new MemoTableLookup.Fail();
-            }
-            List<Node<Symbol>> parseTree = lookupParseTree.get(key);
-            return new MemoTableLookup.Success(offset, parseTree);
-
+    public MemoTableLookup<T> get(MemoTableKey key) {
+        if (lookupTable.containsKey(key)) {
+            return new MemoTableLookup.Hit<>(lookupTable.get(key));
         }
-        return new MemoTableLookup.NoHit();
+        return new MemoTableLookup.NoHit<>();
     }
 
     public Optional<MemoTableKey> getHighestSuccess() {
-        return lookupOffset.entrySet().stream()
-                .filter(entry -> entry.getValue() != -1)
-                .map(Map.Entry::getKey)
-                .max(Comparator.comparing(MemoTableKey::position));
+        // TODO
+        return Optional.empty();
     }
 }
