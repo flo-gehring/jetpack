@@ -3,7 +3,6 @@ package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.datatypes.Node;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -268,7 +267,7 @@ public class GrammarTest {
                 Node<Symbol> expected = createTree(
                         List.of("Expr"),
                         List.of(
-                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1"))),
+                                createTree(List.of("Expr", "Num", "Digit"), List.of(terminalLeaf("1"))),
                                 terminalLeaf("+"),
                                 createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1")))
                         )
@@ -288,23 +287,17 @@ public class GrammarTest {
                         List.of(
                                 createTree(
                                         List.of("Expr"),
-                                        List.of(createTree(
-                                                        List.of("Num"),
-                                                        List.of(createTree(
-                                                                List.of("Num"),
-                                                                List.of(
-                                                                        createTree(
-                                                                                List.of("Num"),
-                                                                                List.of(
-                                                                                        createTree(List.of("Digit"), List.of(terminalLeaf("1"))),
-                                                                                        createTree(List.of("Digit"), List.of(terminalLeaf("0"))))
-                                                                        ),
-                                                                        createTree(List.of("Digit"), List.of(terminalLeaf("0")))
-                                                                )))
-                                                ),
-                                                terminalLeaf("+"),
-                                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1")))
-                                        ))));
+                                        List.of(createTree(List.of("Num"),
+                                                        List.of(createTree(List.of("Num"),
+                                                                        List.of(createTree(
+                                                                                        List.of("Num"),
+                                                                                        List.of(createTree(List.of("Digit"), List.of(terminalLeaf("1"))))),
+                                                                                createTree(List.of("Digit"), List.of(terminalLeaf("0"))))),
+                                                                createTree(List.of("Digit"), List.of(terminalLeaf("0"))))
+                                                )
+                                        )),
+                                terminalLeaf("+"),
+                                createTree(List.of("Num", "Digit"), List.of(terminalLeaf("1")))));
                 assertEquals(expected, grammar.parse("100 + 1").getEither());
             }
         }

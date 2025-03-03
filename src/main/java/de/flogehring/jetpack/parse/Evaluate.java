@@ -182,7 +182,6 @@ public class Evaluate {
         HashSet<Symbol.NonTerminal> limits = new HashSet<>(List.of(nonTerminal));
         int oldPosition = currentPosition;
         while (true) {
-
             Either<ConsumedExpression, String> currentAnswer = evalGrow(
                     exp,
                     input,
@@ -322,7 +321,10 @@ public class Evaluate {
                 );
             }
         }
-        return answer;
+        return answer.map(consumedExpression -> new ConsumedExpression(
+                consumedExpression.parsePosition(),
+                List.of(Node.of(nonTerminal, consumedExpression.parseTree()))
+        ));
     }
 
     private static int getPreviousLookupParsePositionOrDefault(
