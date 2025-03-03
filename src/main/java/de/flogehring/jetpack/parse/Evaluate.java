@@ -179,7 +179,6 @@ public class Evaluate {
         Either<ConsumedExpression, String> answer = Either.or(
                 "Unable to evaluate recursive call at " + currentPosition
         );
-        HashSet<Symbol.NonTerminal> limits = new HashSet<>(List.of(nonTerminal));
         int oldPosition = currentPosition;
         while (true) {
             Either<ConsumedExpression, String> currentAnswer = evalGrow(
@@ -188,12 +187,16 @@ public class Evaluate {
                     currentPosition,
                     grammar,
                     parsingState,
-                    limits
+                    new HashSet<>(List.of(nonTerminal))
             );
             if (currentAnswer instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
-                if (consumedExpression.parsePosition() <= oldPosition) break;
+                if (consumedExpression.parsePosition() <= oldPosition){
+                    break;
+                }
                 oldPosition = consumedExpression.parsePosition();
-            } else if (currentAnswer instanceof Either.Or<ConsumedExpression, String>) break;
+            } else if (currentAnswer instanceof Either.Or<ConsumedExpression, String>) {
+                break;
+            }
             updateState(new MemoTableKey(nonTerminal.name(), currentPosition), currentAnswer, parsingState);
             answer = currentAnswer;
         }
