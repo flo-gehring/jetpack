@@ -15,7 +15,7 @@ public sealed interface Symbol extends Expression {
     record Terminal(String symbol) implements Symbol {
 
         public Terminal {
-            Check.requireNotEmpty(symbol);
+            Check.requireNotNull("Terminal string can't be null", symbol);
         }
     }
 

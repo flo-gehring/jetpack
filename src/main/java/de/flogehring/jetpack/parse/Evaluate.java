@@ -151,17 +151,14 @@ public class Evaluate {
         MemoTable<LookupTableEntry> lookup = parsingState.getLookup();
         LookupTableEntry entry = ((MemoTableLookup.Hit<LookupTableEntry>) lookup.get(key)).value();
         switch (answer) {
-            case Either.This<ConsumedExpression, String>(var consumedExpression) -> {
-                lookup.insert(
-                        key,
-                        new LookupTableEntry.Match(
-                                consumedExpression.parsePosition(),
-                                consumedExpression.parseTree(),
-                                entry.growLr()
-                        )
-                );
-                parsingState.setMaxPos(consumedExpression.parsePosition());
-            }
+            case Either.This<ConsumedExpression, String>(var consumedExpression) -> lookup.insert(
+                    key,
+                    new LookupTableEntry.Match(
+                            consumedExpression.parsePosition(),
+                            consumedExpression.parseTree(),
+                            entry.growLr()
+                    )
+            );
             case Either.Or<ConsumedExpression, String>(var _) -> lookup.insert(
                     key, new LookupTableEntry.MisMatch(entry.growLr())
             );

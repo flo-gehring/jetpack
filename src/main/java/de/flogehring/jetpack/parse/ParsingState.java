@@ -9,8 +9,6 @@ import java.util.Stack;
 @Getter
 public class ParsingState {
 
-    @Setter
-    private int maxPos;
     private final Stack<Symbol.NonTerminal> callStack;
     @Setter
     private boolean growState;
