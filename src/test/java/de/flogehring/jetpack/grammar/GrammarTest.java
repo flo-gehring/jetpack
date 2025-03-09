@@ -3,6 +3,7 @@ package de.flogehring.jetpack.grammar;
 
 import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.datatypes.Node;
+import de.flogehring.jetpack.parse.Grammar;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;

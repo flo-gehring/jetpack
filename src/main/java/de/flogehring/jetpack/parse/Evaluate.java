@@ -1,6 +1,8 @@
 package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
+import de.flogehring.jetpack.datatypes.MemoTable;
+import de.flogehring.jetpack.datatypes.MemoTableLookup;
 import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.*;
 
@@ -87,7 +89,7 @@ public class Evaluate {
             Symbol.NonTerminal nonTerminal
     ) {
         final MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        final MemoTable<ParsingStateLookup> memoTable = parsingState.getLookup();
+        final MemoTable<MemoTableKey, ParsingStateLookup> memoTable = parsingState.getLookup();
         final MemoTableLookup<ParsingStateLookup> lookup = memoTable.get(key);
         return switch (lookup) {
             case MemoTableLookup.NoHit<ParsingStateLookup>() -> {
@@ -148,7 +150,7 @@ public class Evaluate {
             Either<ConsumedExpression, String> answer,
             ParsingState parsingState
     ) {
-        MemoTable<ParsingStateLookup> lookup = parsingState.getLookup();
+        MemoTable<MemoTableKey, ParsingStateLookup> lookup = parsingState.getLookup();
         ParsingStateLookup entry = ((MemoTableLookup.Hit<ParsingStateLookup>) lookup.get(key)).value();
         switch (answer) {
             case Either.This<ConsumedExpression, String>(var consumedExpression) -> lookup.insert(

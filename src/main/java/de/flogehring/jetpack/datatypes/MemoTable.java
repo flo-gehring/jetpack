@@ -1,24 +1,24 @@
-package de.flogehring.jetpack.parse;
+package de.flogehring.jetpack.datatypes;
 
 import java.util.*;
 
-public class MemoTable<T> {
+public class MemoTable<S, T> {
 
-    private final HashMap<MemoTableKey, T> lookupTable;
+    private final HashMap<S, T> lookupTable;
 
     private MemoTable() {
         lookupTable = new HashMap<>();
     }
 
-    public static <T> MemoTable<T> of() {
+    public static <S, T> MemoTable<S, T> of() {
         return new MemoTable<>();
     }
 
-    public void insert(MemoTableKey key, T value) {
+    public void insert(S key, T value) {
         lookupTable.put(key, value);
     }
 
-    public MemoTableLookup<T> get(MemoTableKey key) {
+    public MemoTableLookup<T> get(S key) {
         if (lookupTable.containsKey(key)) {
             return new MemoTableLookup.Hit<>(lookupTable.get(key));
         }

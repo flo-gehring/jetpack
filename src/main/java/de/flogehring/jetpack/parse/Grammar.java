@@ -1,10 +1,9 @@
-package de.flogehring.jetpack.grammar;
+package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.datatypes.Node;
-import de.flogehring.jetpack.parse.ConsumedExpression;
-import de.flogehring.jetpack.parse.Evaluate;
-import de.flogehring.jetpack.parse.Input;
+import de.flogehring.jetpack.grammar.Expression;
+import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.util.Check;
 import lombok.Getter;
 import lombok.ToString;
