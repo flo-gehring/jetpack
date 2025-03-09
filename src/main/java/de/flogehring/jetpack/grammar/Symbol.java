@@ -1,5 +1,7 @@
 package de.flogehring.jetpack.grammar;
 
+import de.flogehring.jetpack.util.Check;
+
 public sealed interface Symbol extends Expression {
 
     static Symbol terminal(String s) {
@@ -12,8 +14,15 @@ public sealed interface Symbol extends Expression {
 
     record Terminal(String symbol) implements Symbol {
 
+        public Terminal {
+            Check.requireNotEmpty(symbol);
+        }
     }
 
     record NonTerminal(String name) implements Symbol {
+
+        public NonTerminal {
+            Check.requireNotEmpty(name);
+        }
     }
 }

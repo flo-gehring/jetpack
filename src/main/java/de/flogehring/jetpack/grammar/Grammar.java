@@ -178,7 +178,6 @@ public class Grammar {
         throw new RuntimeException("Unexpected Nonterminal in Grammar Definition");
     }
 
-
     public Grammar(String startingRule, Map<String, Expression> rules) {
         Check.requireNotNull("The parameters to Grammar can't be null.",
                 startingRule, rules);

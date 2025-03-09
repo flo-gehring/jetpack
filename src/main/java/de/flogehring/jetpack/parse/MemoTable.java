@@ -24,9 +24,4 @@ public class MemoTable<T> {
         }
         return new MemoTableLookup.NoHit<>();
     }
-
-    public Optional<MemoTableKey> getHighestSuccess() {
-        // TODO
-        return Optional.empty();
-    }
 }

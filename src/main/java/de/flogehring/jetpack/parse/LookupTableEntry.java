@@ -10,7 +10,6 @@ public sealed interface LookupTableEntry {
     boolean growLr();
 
     record Fail(boolean growLr) implements LookupTableEntry {
-
     }
 
     record MisMatch(boolean growLr)  implements LookupTableEntry{
@@ -19,5 +18,4 @@ public sealed interface LookupTableEntry {
     record Match(int parsePosition, List<Node<Symbol>> parseTree, boolean growLr) implements LookupTableEntry {
 
     }
-
 }

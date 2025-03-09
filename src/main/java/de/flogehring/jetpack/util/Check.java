@@ -5,7 +5,6 @@ import java.util.Map;
 public class Check {
 
     private Check() {
-
     }
 
     public static void require(boolean condition, String message) {

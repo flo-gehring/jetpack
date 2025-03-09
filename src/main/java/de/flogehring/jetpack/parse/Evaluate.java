@@ -190,7 +190,7 @@ public class Evaluate {
                     new HashSet<>(List.of(nonTerminal))
             );
             if (currentAnswer instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
-                if (consumedExpression.parsePosition() <= oldPosition){
+                if (consumedExpression.parsePosition() <= oldPosition) {
                     break;
                 }
                 oldPosition = consumedExpression.parsePosition();
@@ -336,10 +336,10 @@ public class Evaluate {
     ) {
         return switch (previousLookup) {
             case MemoTableLookup.NoHit<LookupTableEntry> _ -> defaultPosition;
-            case MemoTableLookup.Hit<LookupTableEntry> hit -> switch (hit.value()) {
-                case LookupTableEntry.Match(var parsePosition, var _, var _) -> parsePosition;
-                default -> defaultPosition;
-            };
+            case MemoTableLookup.Hit<LookupTableEntry> hit ->
+                    hit.value() instanceof LookupTableEntry.Match(var parsePosition, var _, var _)
+                            ? parsePosition
+                            : defaultPosition;
         };
     }
 

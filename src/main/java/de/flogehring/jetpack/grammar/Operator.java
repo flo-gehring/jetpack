@@ -12,10 +12,10 @@ public sealed interface Operator extends Expression {
     }
 
     record OrderedChoice(Expression either, Expression or) implements Operator {
+
         public OrderedChoice {
             Check.requireNotNull("No Expression for Ordered Choice can be null", either, or);
         }
-
     }
 
     record Star(Expression exp) implements Operator {

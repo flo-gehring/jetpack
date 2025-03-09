@@ -1,6 +1,5 @@
 package de.flogehring.jetpack.parse;
 
-import de.flogehring.jetpack.datatypes.Tuple;
 import de.flogehring.jetpack.util.Check;
 
 import java.text.MessageFormat;
@@ -56,34 +55,5 @@ public class Input {
                 )
         );
         return token.substring(offsetInToken);
-    }
-
-    public Tuple<String, String> splitInput(int position) {
-        Map.Entry<Integer, String> floorEntry = tokens.floorEntry(position);
-        int startOfToken = floorEntry.getKey();
-        int offsetInToken = position - startOfToken;
-        String token = floorEntry.getValue();
-        Check.require(
-                offsetInToken <= token.length(),
-                MessageFormat.format(
-
-                        "Out of bounds index {0} for token {1} starting at {2} with length {3}" +
-                                " -> Offset {4} too large",
-                        position, token, startOfToken, token.length(), offsetInToken
-                )
-        );
-        String left = "";
-        if (floorEntry.getKey() > 0) {
-            left = String.join(" ", tokens.subMap(0, true, startOfToken, false)
-                    .values());
-        }
-        left += " " + token.substring(0, offsetInToken);
-        String right = token.substring(offsetInToken) + " ";
-        if (floorEntry.getKey() < tokens.size()) {
-            right += String.join(" ", tokens.subMap(startOfToken, false, tokens.lastKey(), false)
-                    .values());
-        }
-        return new Tuple<>(left, right);
-
     }
 }
