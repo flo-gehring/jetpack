@@ -106,7 +106,6 @@ public class GrammarTest {
 
             @Test
             void createGrammar() {
-
                 Grammar actual = Grammar.of(grammarByText).getEither();
                 Map<String, Expression> actualRules = actual.getRules();
                 Map<String, Expression> expectedRules = testGrammar.getRules();
