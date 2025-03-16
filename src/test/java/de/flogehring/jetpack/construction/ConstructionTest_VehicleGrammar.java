@@ -1,16 +1,21 @@
 package de.flogehring.jetpack.construction;
 
+import de.flogehring.jetpack.datatypes.Node;
+import de.flogehring.jetpack.grammar.Symbol;
+import de.flogehring.jetpack.parse.Grammar;
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 import java.util.Optional;
 
 public class ConstructionTest_VehicleGrammar {
 
-    private static final String grammar = """
+    private static final String GRAMMAR_DEFINITION = """
             Vehicle  <- Car / Train
             Car <- "Car" Engine Seats TÜV Extras?
-            Engine <- (("Electric" Num "kWh/100km" )/ ("Gas" Num "l/100km" Num "nox" ) / ("Diesel" Num "l/100km")) Num "HP"
+            Engine <- (("Electric" Num "kWh*100km") / ("Gas" Num "l*100km" Num "nox" ) / ("Diesel" Num "l*100km")) Num "HP"
             Seats <- "Seats" Num
-            TÜV <- ("Next HU" Num "/" Num) / ("n/a")
+            TÜV <- ("Next HU" Num "-" Num) / ("na")
             Extras <- ("AWD" / "4WD")? "AC"? "CarPlay"?
             Train <- "Train" Waggons
             Waggons <- WaggonSpec+
@@ -22,6 +27,12 @@ public class ConstructionTest_VehicleGrammar {
 
 
 
+    @Test
+    void carWithoutExtras() {
+        String car = "Car Electric 10 kWh/100Km Seats 5 Next Hu 10/25 AC CarPlay";
+        Node<Symbol> parsedCar = Grammar.of(GRAMMAR_DEFINITION).getEither().parse(car).getEither();
+        System.out.println(parsedCar);
+    }
 
 
     sealed interface Vehicle {
