@@ -20,7 +20,7 @@ import static de.flogehring.jetpack.parse.EvaluateTerminal.applyTerminal;
  * <a href="https://www.jstage.jst.go.jp/article/ipsjjip/29/0/29_174/_pdf"> Umeda and Maeda Paper "Packrat Parsers Can Support Multiple Left-recursive
  * Calls at the Same Position"</a>
  */
-public class Evaluate {
+class Evaluate {
 
     private Evaluate() {
     }

@@ -1,12 +1,10 @@
-package de.flogehring.jetpack.grammar;
+package de.flogehring.jetpack.construction;
 
-import de.flogehring.jetpack.construction.Constructor;
-import de.flogehring.jetpack.construction.ConstructorBuilder;
-import de.flogehring.jetpack.construction.ConstructorFunction;
 import de.flogehring.jetpack.datatypes.Node;
-import de.flogehring.jetpack.grammar.ConstructionTest.Expr.MathOperation.NoOp;
-import de.flogehring.jetpack.grammar.ConstructionTest.Expr.MathOperation.Op;
-import de.flogehring.jetpack.grammar.ConstructionTest.Expr.MathOperation.Op.MathOperator;
+import de.flogehring.jetpack.construction.ConstructionTest.Expr.MathOperation.NoOp;
+import de.flogehring.jetpack.construction.ConstructionTest.Expr.MathOperation.Op;
+import de.flogehring.jetpack.construction.ConstructionTest.Expr.MathOperation.Op.MathOperator;
+import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.parse.Grammar;
 import de.flogehring.jetpack.util.Check;
 import org.junit.jupiter.api.Test;

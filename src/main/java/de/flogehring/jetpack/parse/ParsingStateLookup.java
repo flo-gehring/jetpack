@@ -5,16 +5,17 @@ import de.flogehring.jetpack.grammar.Symbol;
 
 import java.util.List;
 
-public sealed interface ParsingStateLookup {
+sealed interface ParsingStateLookup {
 
     boolean growLr();
 
     record Fail(boolean growLr) implements ParsingStateLookup {
     }
 
-    record MisMatch(boolean growLr)  implements ParsingStateLookup {
+    record MisMatch(boolean growLr) implements ParsingStateLookup {
 
     }
+
     record Match(int parsePosition, List<Node<Symbol>> parseTree, boolean growLr) implements ParsingStateLookup {
 
     }

@@ -1,9 +1,6 @@
-package de.flogehring.jetpack.grammar;
+package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
-import de.flogehring.jetpack.parse.ConsumedExpression;
-import de.flogehring.jetpack.parse.EvaluateTerminal;
-import de.flogehring.jetpack.parse.Input;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;

@@ -1,7 +1,9 @@
-package de.flogehring.jetpack.grammar;
+package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
-import de.flogehring.jetpack.parse.*;
+import de.flogehring.jetpack.grammar.Expression;
+import de.flogehring.jetpack.grammar.Operator;
+import de.flogehring.jetpack.grammar.Symbol;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -4,7 +4,7 @@ import de.flogehring.jetpack.datatypes.MemoTable;
 import lombok.Getter;
 
 @Getter
-public class ParsingState {
+class ParsingState {
 
     private final MemoTable<MemoTableKey, ParsingStateLookup> lookup;
 
