@@ -100,7 +100,6 @@ public class ConstructionTest {
                         descentToOne
                 )
         )), expressionConstructor.from(parseTree));
-
     }
 
     private ConstructorFunction<Expr> valueRule() {
