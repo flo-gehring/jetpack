@@ -7,6 +7,7 @@ import de.flogehring.jetpack.util.Check;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class ResolverFunctionBuilder<T> {
@@ -22,6 +23,32 @@ public class ResolverFunctionBuilder<T> {
 
     public static <T> ResolverFunctionBuilder<T> init(Class<T> target, RuleResolver resolver) {
         return new ResolverFunctionBuilder<>(resolver, target);
+    }
+
+    public ComposedObject composed() {
+        return new ComposedObject();
+    }
+
+    public class ComposedObject {
+
+        private Function<Node<Symbol>, T> delegate;
+
+        public ComposedObjectReady from(BiFunction<RuleResolver, Node<Symbol>, T> f) {
+            delegate = symbolNode -> f.apply(
+                    resolver, symbolNode
+            );
+            return new ComposedObjectReady();
+        }
+
+        public class ComposedObjectReady {
+            private ComposedObjectReady() {
+            }
+
+            public Function<Node<Symbol>, T> build() {
+                return delegate;
+            }
+        }
+
     }
 
     public SingleNonTerminalChild expectSingleNonTerminal() {

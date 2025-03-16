@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static de.flogehring.jetpack.grammar.Symbol.nonTerminal;
+
 public class ConstructionTest_VehicleGrammar {
 
     private static final String GRAMMAR_DEFINITION = """
@@ -35,6 +37,40 @@ public class ConstructionTest_VehicleGrammar {
                 .onRule("Car").delegateToResolver()
                 .build();
         resolver.insert("Vehicle", Vehicle.class, vehicleFunction);
+        Function<Node<Symbol>, Vehicle.Car> carRule = ResolverFunctionBuilder.init(
+                        Vehicle.Car.class,
+                        resolver
+                ).composed()
+                .from(
+                        (r, node) ->
+                                new Vehicle.Car(
+                                        r.findChildAndApply(
+                                                nonTerminal("Engine"),
+                                                "Engine",
+                                                Engine.class
+                                        ).apply(node),
+                                        r.findChildAndApply(
+                                                nonTerminal("Seats"),
+                                                "Seats",
+                                                Integer.class
+                                        ).apply(node),
+                                        (Optional<String>) r.findChildAndApply(
+                                                nonTerminal("TUEV"),
+                                                "TUEV",
+                                                Optional.class
+
+                                        ).apply(node),
+                                        r.findListAndApply(
+                                                nonTerminal("Extras"),
+                                                "Extra",
+                                                CarExtras.class
+                                        ).apply(node))).build();
+        resolver.insert("Car", Vehicle.Car.class, carRule);
+        resolver.insert("Engine", Engine.class, (_) -> new Engine.Diesel(14));
+        resolver.insert("Seats", Integer.class, _ -> 5);
+        resolver.insert("TUEV", Optional.class, (_) -> Optional.of("NA"));
+        resolver.insert("Extra", CarExtras.class, _ -> CarExtras.AC);
+
         return resolver;
     }
 
