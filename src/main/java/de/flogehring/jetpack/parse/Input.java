@@ -3,10 +3,7 @@ package de.flogehring.jetpack.parse;
 import de.flogehring.jetpack.util.Check;
 
 import java.text.MessageFormat;
-import java.util.Collections;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.*;
 
 public class Input {
 
@@ -55,5 +52,22 @@ public class Input {
                 )
         );
         return token.substring(offsetInToken);
+    }
+
+    public String left(int position) {
+        SortedMap<Integer, String> headMap = tokens.headMap(position);
+        String startOfToken = getStartOfToken(position);
+        return headMap.values().stream().reduce(" ", String::concat) + (startOfToken.isEmpty() ? "" : " " + startOfToken);
+    }
+
+    public String right(int position) {
+        SortedMap<Integer, String> headMap = tokens.tailMap(position);
+        String remainingToken = getRemainingToken(position);
+        return  (remainingToken.isEmpty() ? "" : " " + remainingToken) + headMap.values().stream().reduce(" ", String::concat);
+    }
+
+    private String getStartOfToken(int position) {
+        Map.Entry<Integer, String> entry = Objects.requireNonNull(tokens.floorEntry(position));
+        return entry.getValue().substring(0, position - entry.getKey());
     }
 }

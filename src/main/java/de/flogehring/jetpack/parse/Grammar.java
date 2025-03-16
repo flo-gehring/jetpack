@@ -218,7 +218,11 @@ public class Grammar {
             }
             String errorMessage = "Could only match " + consumedExpression.parsePosition() +
                     " of " + input.length() + " characters";
+            String left = input.left(consumedExpression.parsePosition());
+            String right = input.right(consumedExpression.parsePosition());
             System.out.println(errorMessage);
+            System.out.println("Parsed"  + left);
+            System.out.println("Unparsed" + right);
             return Either.or(
                     errorMessage
             );
