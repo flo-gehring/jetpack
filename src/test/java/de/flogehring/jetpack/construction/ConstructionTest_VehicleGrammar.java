@@ -36,7 +36,7 @@ public class ConstructionTest_VehicleGrammar {
                 .onRule("Train").delegateToResolver()
                 .onRule("Car").delegateToResolver()
                 .build();
-        resolver.insert("Vehicle", Vehicle.class, vehicleFunction);
+        resolver.insert("Vehicle", vehicleFunction);
         Function<Node<Symbol>, Vehicle.Car> carRule = ResolverFunctionBuilder.init(
                         Vehicle.Car.class,
                         resolver
@@ -54,22 +54,21 @@ public class ConstructionTest_VehicleGrammar {
                                                 "Seats",
                                                 Integer.class
                                         ).apply(node),
-                                        (Optional<String>) r.findChildAndApply(
+                                        r.findOptionalAndApply(
                                                 nonTerminal("TUEV"),
                                                 "TUEV",
-                                                Optional.class
-
+                                                String.class
                                         ).apply(node),
                                         r.findListAndApply(
                                                 nonTerminal("Extras"),
                                                 "Extra",
                                                 CarExtras.class
                                         ).apply(node))).build();
-        resolver.insert("Car", Vehicle.Car.class, carRule);
-        resolver.insert("Engine", Engine.class, (_) -> new Engine.Diesel(14));
-        resolver.insert("Seats", Integer.class, _ -> 5);
-        resolver.insert("TUEV", Optional.class, (_) -> Optional.of("NA"));
-        resolver.insert("Extra", CarExtras.class, _ -> CarExtras.AC);
+        resolver.insert("Car", carRule);
+        resolver.insert("Engine", (_) -> new Engine.Diesel(14));
+        resolver.insert("Seats", _ -> 5);
+        resolver.insert("TUEV", (_) -> Optional.of("NA"));
+        resolver.insert("Extra", _ -> CarExtras.AC);
 
         return resolver;
     }

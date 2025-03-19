@@ -23,10 +23,11 @@ public class RuleResolver {
     }
 
 
-    public <T> void insert(String rule, Class<T> targetClass, Function<Node<Symbol>, T> function) {
+    public <T> void insert(String rule, Function<Node<Symbol>, T> function) {
         rules.insert(rule, function);
     }
 
+    // TODO Can this be static?
     public <T> Function<Node<Symbol>, T> findChildAndApply(
             Symbol node,
             String rule,
@@ -80,6 +81,4 @@ public class RuleResolver {
         }
     }
 
-    private record Rule(String rule, Class<?> targetType) {
-    }
 }
