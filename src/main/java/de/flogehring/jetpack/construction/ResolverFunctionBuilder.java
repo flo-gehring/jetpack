@@ -1,17 +1,15 @@
 package de.flogehring.jetpack.construction;
 
 import de.flogehring.jetpack.datatypes.Node;
+import de.flogehring.jetpack.datatypes.Tuple;
 import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.util.Check;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class ResolverFunctionBuilder<T> {
-
 
     private final RuleResolver resolver;
     private final Class<T> target;
@@ -27,6 +25,43 @@ public class ResolverFunctionBuilder<T> {
 
     public ComposedObject composed() {
         return new ComposedObject();
+    }
+
+
+    public Case cases() {
+        return new Case();
+    }
+
+    public class Case {
+
+        List<Tuple<Function<Node<Symbol>, Boolean>, Function<Node<Symbol>, T>>> cases;
+        Function<Node<Symbol>, T> elseCase;
+
+        private Case() {
+            cases = new ArrayList<>();
+        }
+
+        public Case ifThen(
+                Function<Node<Symbol>, Boolean> when, Function<Node<Symbol>, T> then
+        ) {
+            cases.add(new Tuple<>(when, then));
+            return this;
+        }
+
+        public Function<Node<Symbol>, T> elseCase(
+                Function<Node<Symbol>, T> elseCase
+        ) {
+            this.elseCase = elseCase;
+            return build();
+        }
+
+        public Function<Node<Symbol>, T> build() {
+            return node -> cases.stream().filter(
+                            tuple -> tuple.left().apply(node)
+                    ).findFirst().map(tuple -> tuple.right().apply(node))
+                    .or(() -> elseCase != null ? Optional.of(elseCase.apply(node)) : Optional.empty())
+                    .orElseThrow(() -> new RuntimeException("No Case matched for node" + node.toString()));
+        }
     }
 
     public class ComposedObject {
@@ -72,20 +107,20 @@ public class ResolverFunctionBuilder<T> {
         }
 
         private T resolve(Node<Symbol> symbolNode) {
+            List<Node<Symbol>> nonterminalChildren = symbolNode.getChildren()
+                    .stream()
+                    .filter(child -> child.getValue() instanceof Symbol.NonTerminal)
+                    .toList();
             Check.require(
-                    symbolNode.getChildren().size() == 1,
-                    "Expected Exactly one Child for symbol " + symbolNode.getValue()
+                    nonterminalChildren.size() == 1,
+                    "Expected exactly one Non-Terminal Child for symbol " + symbolNode.getValue()
             );
-            Node<Symbol> child = symbolNode.getChildren().getFirst();
-            Symbol value = child.getValue();
-            if (value instanceof Symbol.NonTerminal(var name)) {
-                return Objects.requireNonNull(
-                        possibilities.get(name),
-                        "No RuleResolverFunction specified for " + name
-                ).apply(child);
-            } else {
-                throw new RuntimeException("Expected Non-Terminal Child, found Terminal");
-            }
+            Node<Symbol> child = nonterminalChildren.getFirst();
+            Symbol.NonTerminal value = (Symbol.NonTerminal) child.getValue();
+            return Objects.requireNonNull(
+                    possibilities.get(value.name()),
+                    "No RuleResolverFunction specified for " + value.name()
+            ).apply(child);
         }
 
         public class OnRule {
@@ -102,8 +137,6 @@ public class ResolverFunctionBuilder<T> {
                 possibilities.put(rule, symbolNode -> resolver.get(rule, target).apply(symbolNode));
                 return caller;
             }
-
         }
     }
-
 }

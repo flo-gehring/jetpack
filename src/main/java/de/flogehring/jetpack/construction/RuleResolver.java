@@ -41,6 +41,20 @@ public class RuleResolver {
         return findChild.andThen(n -> get(rule, target).apply(n));
     }
 
+    public <T> Function<Node<Symbol>, T> findChildAndApply(
+            Symbol node,
+            int position,
+            String rule,
+            Class<T> target
+    ) {
+        Function<Node<Symbol>, Node<Symbol>> findChild = arg -> {
+            List<Node<Symbol>> list = arg.getChildren().stream().filter(child -> child.getValue().equals(node)).toList();
+            Check.require(position < list.size(), "Expected at most " + (position + 1) + " + nodes " + node + "but found" + list.size());
+            return list.get(position);
+        };
+        return findChild.andThen(n -> get(rule, target).apply(n));
+    }
+
 
     public <T> Function<Node<Symbol>, List<T>> findListAndApply(
 
@@ -56,6 +70,7 @@ public class RuleResolver {
         );
     }
 
+    // TODO Something like flatmap
     public <T> Function<Node<Symbol>, Optional<T>> findOptionalAndApply(
             Symbol node,
             String rule,
