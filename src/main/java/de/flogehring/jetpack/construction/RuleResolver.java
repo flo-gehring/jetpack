@@ -27,7 +27,6 @@ public class RuleResolver {
         rules.insert(rule, function);
     }
 
-    // TODO Can this be static?
     public <T> Function<Node<Symbol>, T> findChildAndApply(
             Symbol node,
             String rule,

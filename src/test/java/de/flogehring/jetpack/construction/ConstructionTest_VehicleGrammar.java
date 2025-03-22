@@ -5,6 +5,7 @@ import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.parse.Grammar;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -77,8 +78,7 @@ public class ConstructionTest_VehicleGrammar {
         resolver.insert("Engine", engineRule);
         resolver.insert("TUEV", ResolverFunctionBuilder.init(String.class, resolver)
                 .cases()
-                .ifThen(
-                        SelectorFunctions.getTerminalValue(0).andThen(s -> s.equals("na")),
+                .ifThen(SelectorFunctions.getTerminalValue(0).andThen(s -> s.equals("na")),
                         _ -> "n/a"
                 )
                 .elseCase(ResolverFunctionBuilder.init(String.class, resolver).composed().from(
@@ -91,8 +91,27 @@ public class ConstructionTest_VehicleGrammar {
                                         .apply(s)
                                         .toString()
                 ).build()));
-        resolver.insert("Extra", _ -> CarExtras.AC);
-
+        resolver.insert("Extra", SelectorFunctions.getTerminalValue(0).andThen(CarExtras::fromPrintable));
+        resolver.insert("Train", ResolverFunctionBuilder.init(Vehicle.Train.class, resolver).composed()
+                .from((r, node) -> new Vehicle.Train(
+                        (List<Waggons>) r.findChildAndApply(
+                                new Symbol.NonTerminal("Waggons"), "Waggons", List.class
+                        ).apply(node)
+                ))
+                .build());
+        resolver.insert("Waggons", ResolverFunctionBuilder.init(List.class, resolver)
+                .composed()
+                .from((r, n)
+                        -> r.findListAndApply(new Symbol.NonTerminal("WaggonSpec"), "WaggonSpec", Waggons.class)
+                        .apply(n)
+                ).build());
+        resolver.insert("WaggonSpec",
+                ResolverFunctionBuilder.init(Waggons.class, resolver).expectSingleNonTerminal()
+                        .onRule("PassengerWaggon").delegateToResolver()
+                        .onRule("PowerWaggon").delegateToResolver()
+                        .build());
+        resolver.insert("PassengerWaggon", _ -> new Waggons.PassengerCar(2, 1, 1));
+        resolver.insert("PowerWaggon", _ -> new Waggons.PowerCar(new Engine.Electric(12)));
         return resolver;
     }
 
@@ -136,7 +155,9 @@ public class ConstructionTest_VehicleGrammar {
         String car = "Car Gas 10 l100Km 5 nox 78 HP Seats 4 NextHu 9 - 22";
         Grammar grammar = Grammar.of(GRAMMAR_DEFINITION).getEither();
         Node<Symbol> parsedCar = grammar.parse(car).getEither();
-        System.out.println(parsedCar);
+        RuleResolver r = getResolver();
+        Vehicle vehicle = r.get("Vehicle", Vehicle.class).apply(parsedCar);
+        System.out.println(vehicle);
     }
 
     @Test
@@ -144,7 +165,9 @@ public class ConstructionTest_VehicleGrammar {
         String car = "Train Electric 100 kWh100Km 1000 HP Passenger  50 Seats 100 Standing 5 Bikes Passenger 55 Seats 102 Standing";
         Grammar grammar = Grammar.of(GRAMMAR_DEFINITION).getEither();
         Node<Symbol> parsedCar = grammar.parse(car).getEither();
-        System.out.println(parsedCar);
+        RuleResolver r = getResolver();
+        Vehicle vehicle = r.get("Vehicle", Vehicle.class).apply(parsedCar);
+        System.out.println(vehicle);
     }
 
 
@@ -158,11 +181,9 @@ public class ConstructionTest_VehicleGrammar {
         }
 
         record Train(
-                Engine engine,
                 List<Waggons> waggons
         ) implements Vehicle {
         }
-
     }
 
     sealed interface Waggons {
@@ -170,15 +191,28 @@ public class ConstructionTest_VehicleGrammar {
 
         }
 
-        record PassengerCar(int seats, int standing, int bikes) {
+        record PassengerCar(int seats, int standing, int bikes) implements Waggons {
         }
     }
 
     enum CarExtras {
-        AWD,
-        FOUR_WD,
-        AC,
-        CAR_PLAY
+        AWD("AWD"),
+        FOUR_WD("4WD"),
+        AC("AC"),
+        CAR_PLAY("CarPlay");
+
+        private final String name;
+
+        CarExtras(String name) {
+            this.name = name;
+        }
+
+        public static CarExtras fromPrintable(String name) {
+            return Arrays.stream(CarExtras.values()).filter(
+                            extra -> extra.name.equals(name)
+                    ).findFirst()
+                    .orElseThrow(() -> new RuntimeException("No car extra with name: " + name));
+        }
     }
 
     sealed interface Engine {
