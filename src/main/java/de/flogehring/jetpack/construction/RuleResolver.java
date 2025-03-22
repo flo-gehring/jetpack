@@ -54,6 +54,21 @@ public class RuleResolver {
         return findChild.andThen(n -> get(rule, target).apply(n));
     }
 
+    public <T> Function<Node<Symbol>, Optional<T>> findOptionalAndApply(Symbol node, int position, String rule, Class<T> type) {
+        Function<Node<Symbol>, Optional<Node<Symbol>>> findChild = arg -> {
+            List<Node<Symbol>> list = arg.getChildren().stream().filter(child -> child.getValue().equals(node)).toList();
+            if (position < list.size()) {
+
+                return Optional.of(list.get(position));
+            } else {
+
+                return Optional.empty();
+            }
+        };
+        return findChild
+                .andThen(n -> n.map(found -> get(rule, type).apply(found)));
+    }
+
 
     public <T> Function<Node<Symbol>, List<T>> findListAndApply(
 
@@ -68,8 +83,8 @@ public class RuleResolver {
                         .map(found -> get(rule, target).apply(found)).toList()
         );
     }
-
     // TODO Something like flatmap
+
     public <T> Function<Node<Symbol>, Optional<T>> findOptionalAndApply(
             Symbol node,
             String rule,
@@ -94,5 +109,4 @@ public class RuleResolver {
             throw new RuntimeException("Try to resolve Rule  " + rule + " for " + target.getCanonicalName() + " but not found");
         }
     }
-
 }
