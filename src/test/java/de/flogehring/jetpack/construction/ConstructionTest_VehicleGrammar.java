@@ -35,8 +35,8 @@ public class ConstructionTest_VehicleGrammar {
         Function<Node<Symbol>, Vehicle> vehicleFunction = ResolverFunctionBuilder.init(Vehicle.class, resolver)
                 .expectSingleNonTerminal()
                 .delegateToResolver();
-        resolver.insert(nonTerminal("Vehicle"), vehicleFunction);
-        resolver.insert(nonTerminal("Seats"), ResolverFunctionBuilder.init(Integer.class, resolver).expectSingleNonTerminal()
+        resolver.insert(nonTerminal("Seats"), ResolverFunctionBuilder.init(Integer.class, resolver)
+                .expectSingleNonTerminal()
                 .delegateToResolver());
         Function<Node<Symbol>, Vehicle.Car> carRule = ResolverFunctionBuilder.init(Vehicle.Car.class, resolver)
                 .composed()
@@ -44,12 +44,11 @@ public class ConstructionTest_VehicleGrammar {
                 .build();
         resolver.insert(nonTerminal("Num"), SelectorFunctions.getTerminalValue(0).andThen(Integer::valueOf));
         resolver.insert(nonTerminal("Car"), carRule);
+        resolver.insert(nonTerminal("Vehicle"), vehicleFunction);
         resolver.insert(nonTerminal("Engine"), getEngineRule(resolver));
         resolver.insert(nonTerminal("TUEV"), ResolverFunctionBuilder.init(String.class, resolver)
                 .ifThenElse()
-                .ifThen(getWhen("na"),
-                        _ -> "n/a"
-                )
+                .ifThen(getWhen("na"), _ -> "n/a")
                 .elseCase(ResolverFunctionBuilder.init(String.class, resolver).composed().from(
                         (r, s) ->
                                 r.findChildAndApply(
