@@ -34,14 +34,10 @@ public class ConstructionTest_VehicleGrammar {
         RuleResolver resolver = RuleResolver.init();
         Function<Node<Symbol>, Vehicle> vehicleFunction = ResolverFunctionBuilder.init(Vehicle.class, resolver)
                 .expectSingleNonTerminal()
-                .onRule(nonTerminal("Train")).delegateToResolver()
-                .onRule(nonTerminal("Car")).delegateToResolver()
-                .build();
+                .delegateToResolver();
         resolver.insert(nonTerminal("Vehicle"), vehicleFunction);
-        resolver.insert(nonTerminal("Seats"), ResolverFunctionBuilder.init(Integer.class, resolver)
-                .expectSingleNonTerminal()
-                .onRule(nonTerminal("Num")).delegateToResolver()
-                .build());
+        resolver.insert(nonTerminal("Seats"), ResolverFunctionBuilder.init(Integer.class, resolver).expectSingleNonTerminal()
+                .delegateToResolver());
         Function<Node<Symbol>, Vehicle.Car> carRule = ResolverFunctionBuilder.init(Vehicle.Car.class, resolver)
                 .composed()
                 .from(ConstructionTest_VehicleGrammar::getCar)
@@ -80,9 +76,8 @@ public class ConstructionTest_VehicleGrammar {
                 ).build());
         resolver.insert(nonTerminal("WaggonSpec"),
                 ResolverFunctionBuilder.init(Waggons.class, resolver).expectSingleNonTerminal()
-                        .onRule(nonTerminal("PassengerWaggon")).delegateToResolver()
-                        .onRule(nonTerminal("PowerWaggon")).delegateToResolver()
-                        .build());
+                        .delegateToResolver()
+        );
         resolver.insert(nonTerminal("PassengerWaggon"), ResolverFunctionBuilder.init(Waggons.PassengerCar.class, resolver)
                 .composed()
                 .from((r, node) ->
