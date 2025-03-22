@@ -50,7 +50,7 @@ public class ConstructionTest_VehicleGrammar {
         resolver.insert("Car", carRule);
         resolver.insert("Engine", getEngineRule(resolver));
         resolver.insert("TUEV", ResolverFunctionBuilder.init(String.class, resolver)
-                .cases()
+                .ifThenElse()
                 .ifThen(getWhen("na"),
                         _ -> "n/a"
                 )
@@ -108,7 +108,7 @@ public class ConstructionTest_VehicleGrammar {
 
     private static Function<Node<Symbol>, Engine> getEngineRule(RuleResolver resolver) {
         return ResolverFunctionBuilder.init(Engine.class, resolver)
-                .cases()
+                .ifThenElse()
                 .ifThen(getWhen("Electric"),
                         ResolverFunctionBuilder.init(Engine.class, resolver).composed()
                                 .from((r, node) ->

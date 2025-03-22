@@ -27,30 +27,28 @@ public class ResolverFunctionBuilder<T> {
         return new ComposedObject();
     }
 
-
-    public Case cases() {
-        return new Case();
+    public IfThenElse ifThenElse() {
+        return new IfThenElse();
     }
 
-    public class Case {
+    public class IfThenElse {
 
-        List<Tuple<Function<Node<Symbol>, Boolean>, Function<Node<Symbol>, T>>> cases;
-        Function<Node<Symbol>, T> elseCase;
+        private final List<Tuple<Function<Node<Symbol>, Boolean>, Function<Node<Symbol>, T>>> cases;
+        private Function<Node<Symbol>, T> elseCase;
 
-        private Case() {
+        private IfThenElse() {
             cases = new ArrayList<>();
         }
 
-        public Case ifThen(
-                Function<Node<Symbol>, Boolean> when, Function<Node<Symbol>, T> then
+        public IfThenElse ifThen(
+                Function<Node<Symbol>, Boolean> when,
+                Function<Node<Symbol>, T> then
         ) {
             cases.add(new Tuple<>(when, then));
             return this;
         }
 
-        public Function<Node<Symbol>, T> elseCase(
-                Function<Node<Symbol>, T> elseCase
-        ) {
+        public Function<Node<Symbol>, T> elseCase(Function<Node<Symbol>, T> elseCase) {
             this.elseCase = elseCase;
             return build();
         }
@@ -92,7 +90,8 @@ public class ResolverFunctionBuilder<T> {
 
     public class SingleNonTerminalChild {
 
-        Map<String, Function<Node<Symbol>, T>> possibilities;
+        private final Map<String, Function<Node<Symbol>, T>> possibilities;
+        private  Function<Node<Symbol>, T> defaultCase;
 
         private SingleNonTerminalChild() {
             possibilities = new HashMap<>();
