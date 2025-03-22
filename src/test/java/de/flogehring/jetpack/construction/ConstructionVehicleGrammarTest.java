@@ -13,7 +13,7 @@ import java.util.function.Function;
 import static de.flogehring.jetpack.grammar.Symbol.nonTerminal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ConstructionTest_VehicleGrammar {
+public class ConstructionVehicleGrammarTest {
 
     private static final String GRAMMAR_DEFINITION = """
             Vehicle  <- Car / Train
@@ -40,7 +40,7 @@ public class ConstructionTest_VehicleGrammar {
                 .delegateToResolver());
         Function<Node<Symbol>, Vehicle.Car> carRule = ResolverFunctionBuilder.init(Vehicle.Car.class, resolver)
                 .composed()
-                .from(ConstructionTest_VehicleGrammar::getCar)
+                .from(ConstructionVehicleGrammarTest::getCar)
                 .build();
         resolver.insert(nonTerminal("Num"), SelectorFunctions.getTerminalValue(0).andThen(Integer::valueOf));
         resolver.insert(nonTerminal("Car"), carRule);
@@ -60,13 +60,8 @@ public class ConstructionTest_VehicleGrammar {
                                         .toString()
                 ).build()));
         resolver.insert(nonTerminal("Extras"), SelectorFunctions.getTerminalValue(0).andThen(CarExtras::fromPrintable));
-        resolver.insert(nonTerminal("Train"), ResolverFunctionBuilder.init(Vehicle.Train.class, resolver).composed()
-                .from((r, node) -> new Vehicle.Train(
-                        (List<Waggons>) r.findChildAndApply(
-                                new Symbol.NonTerminal("Waggons"), List.class
-                        ).apply(node)
-                ))
-                .build());
+
+        resolver.insert(nonTerminal("Train"), getWaggons(resolver));
         resolver.insert(nonTerminal("Waggons"), ResolverFunctionBuilder.init(List.class, resolver)
                 .composed()
                 .from((r, n)
@@ -98,6 +93,18 @@ public class ConstructionTest_VehicleGrammar {
                                 .apply(node)
                 )).build());
         return resolver;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Function<Node<Symbol>, Vehicle.Train> getWaggons(RuleResolver resolver) {
+        return ResolverFunctionBuilder.init(Vehicle.Train.class, resolver)
+                .composed()
+                .from((r, node) -> new Vehicle.Train(
+                        (List<Waggons>) r.findChildAndApply(
+                                new Symbol.NonTerminal("Waggons"), List.class
+                        ).apply(node)
+                ))
+                .build();
     }
 
     private static Function<Node<Symbol>, Engine> getEngineRule(RuleResolver resolver) {
