@@ -22,7 +22,6 @@ public class RuleResolver {
         return new RuleResolver(MemoTable.of());
     }
 
-
     public <T> void insert(String rule, Function<Node<Symbol>, T> function) {
         rules.insert(rule, function);
     }
