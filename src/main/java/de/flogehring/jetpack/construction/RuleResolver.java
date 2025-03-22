@@ -12,9 +12,9 @@ import java.util.function.Function;
 
 public class RuleResolver {
 
-    private MemoTable<String, Function<Node<Symbol>, ?>> rules;
+    private final MemoTable<String, Function<Node<Symbol>, ?>> rules;
 
-    public RuleResolver(MemoTable<String, Function<Node<Symbol>, ?>> rules) {
+    private RuleResolver(MemoTable<String, Function<Node<Symbol>, ?>> rules) {
         this.rules = rules;
     }
 

@@ -249,7 +249,6 @@ public class ConstructionTest_VehicleGrammar {
     }
 
     sealed interface Engine {
-        int hp();
 
         record Gas(int hp, int noxPpm) implements Engine {
         }
