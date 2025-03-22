@@ -34,22 +34,22 @@ public class ConstructionTest_VehicleGrammar {
         RuleResolver resolver = RuleResolver.init();
         Function<Node<Symbol>, Vehicle> vehicleFunction = ResolverFunctionBuilder.init(Vehicle.class, resolver)
                 .expectSingleNonTerminal()
-                .onRule("Train").delegateToResolver()
-                .onRule("Car").delegateToResolver()
+                .onRule(nonTerminal("Train")).delegateToResolver()
+                .onRule(nonTerminal("Car")).delegateToResolver()
                 .build();
-        resolver.insert("Vehicle", vehicleFunction);
-        resolver.insert("Seats", ResolverFunctionBuilder.init(Integer.class, resolver)
+        resolver.insert(nonTerminal("Vehicle"), vehicleFunction);
+        resolver.insert(nonTerminal("Seats"), ResolverFunctionBuilder.init(Integer.class, resolver)
                 .expectSingleNonTerminal()
-                .onRule("Num").delegateToResolver()
+                .onRule(nonTerminal("Num")).delegateToResolver()
                 .build());
         Function<Node<Symbol>, Vehicle.Car> carRule = ResolverFunctionBuilder.init(Vehicle.Car.class, resolver)
                 .composed()
                 .from(ConstructionTest_VehicleGrammar::getCar)
                 .build();
-        resolver.insert("Num", SelectorFunctions.getTerminalValue(0).andThen(Integer::valueOf));
-        resolver.insert("Car", carRule);
-        resolver.insert("Engine", getEngineRule(resolver));
-        resolver.insert("TUEV", ResolverFunctionBuilder.init(String.class, resolver)
+        resolver.insert(nonTerminal("Num"), SelectorFunctions.getTerminalValue(0).andThen(Integer::valueOf));
+        resolver.insert(nonTerminal("Car"), carRule);
+        resolver.insert(nonTerminal("Engine"), getEngineRule(resolver));
+        resolver.insert(nonTerminal("TUEV"), ResolverFunctionBuilder.init(String.class, resolver)
                 .ifThenElse()
                 .ifThen(getWhen("na"),
                         _ -> "n/a"
@@ -57,50 +57,50 @@ public class ConstructionTest_VehicleGrammar {
                 .elseCase(ResolverFunctionBuilder.init(String.class, resolver).composed().from(
                         (r, s) ->
                                 r.findChildAndApply(
-                                                nonTerminal("Num"), 0, "Num", Integer.class)
+                                                nonTerminal("Num"), 0, Integer.class)
                                         .apply(s)
                                         .toString() + "-" + r.findChildAndApply(
-                                                nonTerminal("Num"), 1, "Num", Integer.class)
+                                                nonTerminal("Num"), 1, Integer.class)
                                         .apply(s)
                                         .toString()
                 ).build()));
-        resolver.insert("Extra", SelectorFunctions.getTerminalValue(0).andThen(CarExtras::fromPrintable));
-        resolver.insert("Train", ResolverFunctionBuilder.init(Vehicle.Train.class, resolver).composed()
+        resolver.insert(nonTerminal("Extras"), SelectorFunctions.getTerminalValue(0).andThen(CarExtras::fromPrintable));
+        resolver.insert(nonTerminal("Train"), ResolverFunctionBuilder.init(Vehicle.Train.class, resolver).composed()
                 .from((r, node) -> new Vehicle.Train(
                         (List<Waggons>) r.findChildAndApply(
-                                new Symbol.NonTerminal("Waggons"), "Waggons", List.class
+                                new Symbol.NonTerminal("Waggons"), List.class
                         ).apply(node)
                 ))
                 .build());
-        resolver.insert("Waggons", ResolverFunctionBuilder.init(List.class, resolver)
+        resolver.insert(nonTerminal("Waggons"), ResolverFunctionBuilder.init(List.class, resolver)
                 .composed()
                 .from((r, n)
-                        -> r.findListAndApply(new Symbol.NonTerminal("WaggonSpec"), "WaggonSpec", Waggons.class)
+                        -> r.findListAndApply(new Symbol.NonTerminal("WaggonSpec"), Waggons.class)
                         .apply(n)
                 ).build());
-        resolver.insert("WaggonSpec",
+        resolver.insert(nonTerminal("WaggonSpec"),
                 ResolverFunctionBuilder.init(Waggons.class, resolver).expectSingleNonTerminal()
-                        .onRule("PassengerWaggon").delegateToResolver()
-                        .onRule("PowerWaggon").delegateToResolver()
+                        .onRule(nonTerminal("PassengerWaggon")).delegateToResolver()
+                        .onRule(nonTerminal("PowerWaggon")).delegateToResolver()
                         .build());
-        resolver.insert("PassengerWaggon", ResolverFunctionBuilder.init(Waggons.PassengerCar.class, resolver)
+        resolver.insert(nonTerminal("PassengerWaggon"), ResolverFunctionBuilder.init(Waggons.PassengerCar.class, resolver)
                 .composed()
                 .from((r, node) ->
                         new Waggons.PassengerCar(
-                                r.findChildAndApply(nonTerminal("Num"), 0, "Num", Integer.class)
+                                r.findChildAndApply(nonTerminal("Num"), 0, Integer.class)
                                         .apply(node),
-                                r.findChildAndApply(nonTerminal("Num"), 1, "Num", Integer.class)
+                                r.findChildAndApply(nonTerminal("Num"), 1, Integer.class)
                                         .apply(node),
-                                r.findOptionalAndApply(nonTerminal("Num"), 2, "Num", Integer.class)
+                                r.findOptionalAndApply(nonTerminal("Num"), 2, Integer.class)
                                         .apply(node)
                                         .orElse(0)
 
                         ))
                 .build());
-        resolver.insert("PowerWaggon", ResolverFunctionBuilder.init(Waggons.PowerCar.class, resolver)
+        resolver.insert(nonTerminal("PowerWaggon"), ResolverFunctionBuilder.init(Waggons.PowerCar.class, resolver)
                 .composed()
                 .from((r, node) -> new Waggons.PowerCar(
-                        r.findChildAndApply(nonTerminal("Engine"), "Engine", Engine.class)
+                        r.findChildAndApply(nonTerminal("Engine"), Engine.class)
                                 .apply(node)
                 )).build());
         return resolver;
@@ -113,23 +113,23 @@ public class ConstructionTest_VehicleGrammar {
                         ResolverFunctionBuilder.init(Engine.class, resolver).composed()
                                 .from((r, node) ->
                                         new Engine.Electric(
-                                                r.findChildAndApply(new Symbol.NonTerminal("Num"), 1, "Num", Integer.class)
+                                                r.findChildAndApply(new Symbol.NonTerminal("Num"), 1, Integer.class)
                                                         .apply(node)
                                         )).build())
                 .ifThen(getWhen("Diesel"),
                         ResolverFunctionBuilder.init(Engine.class, resolver).composed()
                                 .from((r, node) ->
                                         new Engine.Diesel(
-                                                r.findChildAndApply(new Symbol.NonTerminal("Num"), 1, "Num", Integer.class)
+                                                r.findChildAndApply(new Symbol.NonTerminal("Num"), 1, Integer.class)
                                                         .apply(node)
                                         )).build())
                 .ifThen(getWhen("Gas"),
                         ResolverFunctionBuilder.init(Engine.class, resolver).composed()
                                 .from((r, node) ->
                                         new Engine.Gas(
-                                                r.findChildAndApply(new Symbol.NonTerminal("Num"), 2, "Num", Integer.class)
+                                                r.findChildAndApply(new Symbol.NonTerminal("Num"), 2, Integer.class)
                                                         .apply(node),
-                                                r.findChildAndApply(nonTerminal("Num"), 1, "Num", Integer.class)
+                                                r.findChildAndApply(nonTerminal("Num"), 1, Integer.class)
                                                         .apply(node)
                                         )).build())
                 .build();
@@ -143,22 +143,18 @@ public class ConstructionTest_VehicleGrammar {
         return new Vehicle.Car(
                 r.findChildAndApply(
                         nonTerminal("Engine"),
-                        "Engine",
                         Engine.class
                 ).apply(node),
                 r.findChildAndApply(
                         nonTerminal("Seats"),
-                        "Seats",
                         Integer.class
                 ).apply(node),
                 r.findOptionalAndApply(
                         nonTerminal("TUEV"),
-                        "TUEV",
                         String.class
                 ).apply(node),
                 r.findListAndApply(
                         nonTerminal("Extras"),
-                        "Extra",
                         CarExtras.class
                 ).apply(node));
     }
@@ -169,7 +165,7 @@ public class ConstructionTest_VehicleGrammar {
         Grammar grammar = Grammar.of(GRAMMAR_DEFINITION).getEither();
         Node<Symbol> parsedCar = grammar.parse(car).getEither();
         RuleResolver r = getResolver();
-        Vehicle vehicle = r.get("Vehicle", Vehicle.class).apply(parsedCar);
+        Vehicle vehicle = r.get(nonTerminal("Vehicle"), Vehicle.class).apply(parsedCar);
         System.out.println(vehicle);
         assertEquals(new Vehicle.Car(new Engine.Electric(200), 5, Optional.of(
                 "10-25"
@@ -182,7 +178,7 @@ public class ConstructionTest_VehicleGrammar {
         Grammar grammar = Grammar.of(GRAMMAR_DEFINITION).getEither();
         Node<Symbol> parsedCar = grammar.parse(car).getEither();
         RuleResolver r = getResolver();
-        Vehicle vehicle = r.get("Vehicle", Vehicle.class).apply(parsedCar);
+        Vehicle vehicle = r.get(nonTerminal("Vehicle"), Vehicle.class).apply(parsedCar);
         assertEquals(new Vehicle.Car(new Engine.Gas(78, 5), 4, Optional.of("n/a"), List.of()), vehicle);
     }
 
@@ -192,7 +188,7 @@ public class ConstructionTest_VehicleGrammar {
         Grammar grammar = Grammar.of(GRAMMAR_DEFINITION).getEither();
         Node<Symbol> parsedCar = grammar.parse(car).getEither();
         RuleResolver r = getResolver();
-        Vehicle vehicle = r.get("Vehicle", Vehicle.class).apply(parsedCar);
+        Vehicle vehicle = r.get(nonTerminal("Vehicle"), Vehicle.class).apply(parsedCar);
         assertEquals(new Vehicle.Train(
                         List.of(
                                 new Waggons.PowerCar(new Engine.Electric(1000)),
@@ -202,7 +198,6 @@ public class ConstructionTest_VehicleGrammar {
                 ),
                 vehicle);
     }
-
 
     sealed interface Vehicle {
         record Car(

@@ -90,14 +90,14 @@ public class ResolverFunctionBuilder<T> {
 
     public class SingleNonTerminalChild {
 
-        private final Map<String, Function<Node<Symbol>, T>> possibilities;
+        private final Map<Symbol.NonTerminal, Function<Node<Symbol>, T>> possibilities;
         private  Function<Node<Symbol>, T> defaultCase;
 
         private SingleNonTerminalChild() {
             possibilities = new HashMap<>();
         }
 
-        public OnRule onRule(String s) {
+        public OnRule onRule(Symbol.NonTerminal s) {
             return new OnRule(this, s);
         }
 
@@ -117,7 +117,7 @@ public class ResolverFunctionBuilder<T> {
             Node<Symbol> child = nonterminalChildren.getFirst();
             Symbol.NonTerminal value = (Symbol.NonTerminal) child.getValue();
             return Objects.requireNonNull(
-                    possibilities.get(value.name()),
+                    possibilities.get(value),
                     "No RuleResolverFunction specified for " + value.name()
             ).apply(child);
         }
@@ -125,9 +125,9 @@ public class ResolverFunctionBuilder<T> {
         public class OnRule {
 
             private final SingleNonTerminalChild caller;
-            private final String rule;
+            private final Symbol.NonTerminal rule;
 
-            private OnRule(SingleNonTerminalChild caller, String rule) {
+            private OnRule(SingleNonTerminalChild caller, Symbol.NonTerminal rule) {
                 this.caller = caller;
                 this.rule = rule;
             }

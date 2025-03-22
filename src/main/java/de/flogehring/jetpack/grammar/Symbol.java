@@ -8,7 +8,7 @@ public sealed interface Symbol extends Expression {
         return new Terminal(s);
     }
 
-    static Symbol nonTerminal(String s) {
+    static Symbol.NonTerminal nonTerminal(String s) {
         return new NonTerminal(s);
     }
 
