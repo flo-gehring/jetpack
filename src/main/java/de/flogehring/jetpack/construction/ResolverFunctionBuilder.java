@@ -105,6 +105,17 @@ public class ResolverFunctionBuilder<T> {
             return this::resolve;
         }
 
+        public Function<Node<Symbol>, T> delegateToResolver() {
+            return symbol ->
+            {
+                Symbol.NonTerminal nonTerminal = SelectorFunctions.selectNonterminal(0).apply(symbol);
+                List<Node<Symbol>> nonTerminals = symbol.getChildren().stream().filter(child -> child.getValue() instanceof Symbol.NonTerminal).toList();
+                Check.require(nonTerminals.size() == 1, "Expected exactly one Non-Terminal Child");
+                Node<Symbol> nonTerminalChild = nonTerminals.getFirst();
+                return resolver.get(nonTerminal, target).apply(nonTerminalChild);
+            };
+        }
+
         private T resolve(Node<Symbol> symbolNode) {
             List<Node<Symbol>> nonterminalChildren = symbolNode.getChildren()
                     .stream()
