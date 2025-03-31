@@ -54,12 +54,14 @@ public class Input {
         return token.substring(offsetInToken);
     }
 
+    // TODO Test
     public String left(int position) {
         SortedMap<Integer, String> headMap = tokens.headMap(position);
         String startOfToken = getStartOfToken(position);
         return headMap.values().stream().reduce(" ", String::concat) + (startOfToken.isEmpty() ? "" : " " + startOfToken);
     }
 
+    // TODO Test
     public String right(int position) {
         SortedMap<Integer, String> headMap = tokens.tailMap(position);
         String remainingToken = getRemainingToken(position);

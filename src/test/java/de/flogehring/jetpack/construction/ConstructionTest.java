@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.function.Function;
 
+import static de.flogehring.jetpack.grammar.Symbol.nonTerminal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ConstructionTest {
@@ -35,7 +36,7 @@ public class ConstructionTest {
         }
 
 
-        sealed interface MathOperation {
+        sealed interface MathOperation extends Expr {
             record Op(Expr lhs, MathOperator op, Expr rhs) implements MathOperation {
                 public enum MathOperator {
                     PLUS,
@@ -64,7 +65,7 @@ public class ConstructionTest {
                     "Expr",
                     (symbol, parsingLibrary) ->
                             new Expr.Root(
-                                    parsingLibrary.get(Symbol.nonTerminal("Sum")).construct(
+                                    parsingLibrary.get(nonTerminal("Sum")).construct(
                                             symbol.getChildren().getFirst(),
                                             parsingLibrary
                                     )
@@ -99,6 +100,76 @@ public class ConstructionTest {
                 )
         )), expressionConstructor.from(parseTree));
     }
+
+    @Test
+    void testSimpleWithBuilder() {
+        Grammar testGrammar = Grammar.of(grammar).getEither();
+        Node<Symbol> parseTree = testGrammar.parse("1+1").getEither();
+        Expr.Product descentToOne = new Expr.Product(
+                new NoOp(new Expr.Power(new NoOp(new Expr.Value(1))))
+        );
+        RuleResolver resolver = RuleResolverBuilder.init()
+                .addRuleWithFunctionBuilder(nonTerminal("Expr"),
+                        Expr.class,
+                        b -> b.expectSingleNonTerminal()
+                                .delegateToResolver())
+                .addRuleWithFunctionBuilder(
+                        nonTerminal("Sum"),
+                        Expr.class,
+                        builder -> getRule(builder, "Product")
+                )
+                .addRuleWithFunctionBuilder(
+                        nonTerminal("Product"),
+                        Expr.class,
+                        builder -> getRule(builder, "Power")
+                )
+                // TODO Define Rule for Power and Value
+                .get();
+        assertEquals(new Expr.Root(new Expr.Sum(
+                new Op(
+                        descentToOne,
+                        MathOperator.PLUS,
+                        descentToOne
+                )
+        )), expressionConstructor.from(parseTree));
+    }
+
+    private Function<Node<Symbol>, Expr> getRule(ResolverFunctionBuilder<Expr> builder, String rule) {
+        return builder.ifThenElse()
+                .ifThen(SelectorFunctions.isSingleNonTerminal(),
+                        builder.expectSingleNonTerminal().delegateToResolver()
+                ).elseCase(builder.composed().from((resolver1, symbolNode)
+                        -> new Expr.Sum(getMathOp(resolver1, symbolNode, rule))
+                ).build());
+    }
+
+    private Expr.MathOperation getMathOp(RuleResolver resolver, Node<Symbol> symbolNode, String rule) {
+        Expr.MathOperation latest = new Expr.MathOperation.NoOp(resolver.resolve(
+                symbolNode.getChildren().getFirst(),
+                Expr.class
+        ));
+        int ruleCount = 1;
+        for (int i = 1; i < symbolNode.getChildren().size(); i += 2) {
+            latest = new Op(
+                    latest,
+                    getMathOperator(SelectorFunctions.getTerminalValueAbsolute(i).apply(symbolNode)),
+                    SelectorFunctions.findChildAndApply(
+                            resolver,
+                            nonTerminal(rule),
+                            ruleCount,
+                            Expr.class
+                    ).apply(symbolNode)
+            );
+            ruleCount++;
+        }
+        return latest;
+
+    }
+
+    private MathOperator mapMathOp(String apply) {
+        return null;
+    }
+
 
     private ConstructorFunction<Expr> valueRule() {
         return (symbol, parsingLibrary) -> {
@@ -154,16 +225,20 @@ public class ConstructionTest {
 
     private MathOperator mapOp(Symbol value) {
         if (value instanceof Symbol.Terminal(String t)) {
-            return switch (t) {
-                case "+" -> MathOperator.PLUS;
-                case "*" -> MathOperator.TIMES;
-                case "-" -> MathOperator.MINUS;
-                case "/" -> MathOperator.DIVIDED_BY;
-                case "^" -> MathOperator.POWER;
-                default -> throw new RuntimeException("Unexpected Terminal " + t);
-            };
+            return getMathOperator(t);
         } else {
             throw new RuntimeException("Expected Terminal, got Nonterminal: " + value);
         }
+    }
+
+    private static MathOperator getMathOperator(String t) {
+        return switch (t) {
+            case "+" -> MathOperator.PLUS;
+            case "*" -> MathOperator.TIMES;
+            case "-" -> MathOperator.MINUS;
+            case "/" -> MathOperator.DIVIDED_BY;
+            case "^" -> MathOperator.POWER;
+            default -> throw new RuntimeException("Unexpected Terminal " + t);
+        };
     }
 }
