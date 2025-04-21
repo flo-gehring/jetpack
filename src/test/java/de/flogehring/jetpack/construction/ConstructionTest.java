@@ -92,27 +92,27 @@ public class ConstructionTest {
         Expr.Product descentToOne = new Expr.Product(
                 new NoOp(new Expr.Power(new NoOp(new Expr.Value(1))))
         );
-        assertEquals(new Expr.Root(new Expr.Sum(
+        Expr.Root expected = new Expr.Root(new Expr.Sum(
                 new Op(
                         descentToOne,
                         MathOperator.PLUS,
                         descentToOne
                 )
-        )), expressionConstructor.from(parseTree));
+        ));
+        assertEquals(expected, expressionConstructor.from(parseTree));
     }
 
     @Test
     void testSimpleWithBuilder() {
         Grammar testGrammar = Grammar.of(grammar).getEither();
         Node<Symbol> parseTree = testGrammar.parse("1+1").getEither();
-        Expr.Product descentToOne = new Expr.Product(
-                new NoOp(new Expr.Power(new NoOp(new Expr.Value(1))))
-        );
         RuleResolver resolver = RuleResolverBuilder.init()
-                .addRuleWithFunctionBuilder(nonTerminal("Expr"),
-                        Expr.class,
+                .addRuleWithFunctionBuilder(
+                        nonTerminal("Expr"), Expr.class,
                         b -> b.expectSingleNonTerminal()
-                                .delegateToResolver())
+                                .delegateToResolver()
+                                .andThen(Expr.Root::new)
+                )
                 .addRuleWithFunctionBuilder(
                         nonTerminal("Sum"),
                         Expr.class,
@@ -123,15 +123,49 @@ public class ConstructionTest {
                         Expr.class,
                         builder -> getRule(builder, "Power")
                 )
-                // TODO Define Rule for Power and Value
-                .get();
-        assertEquals(new Expr.Root(new Expr.Sum(
-                new Op(
-                        descentToOne,
-                        MathOperator.PLUS,
-                        descentToOne
+                .addRuleWithFunctionBuilder(
+                        nonTerminal("Power"),
+                        Expr.class,
+                        ConstructionTest::getPowerResolver)
+                .addRuleWithFunctionBuilder(
+                        nonTerminal("Value"),
+                        Expr.class,
+                        ConstructionTest::getValueResolver
                 )
-        )), expressionConstructor.from(parseTree));
+                .get();
+        Expr.Root expected = new Expr.Root(new Expr.Sum(
+                new Op(
+                        new NoOp(new Expr.Value(1)),
+                        MathOperator.PLUS,
+                        new Expr.Value(1)
+                )
+        ));
+        assertEquals(expected, resolver.resolve(parseTree, Expr.class));
+    }
+
+    private static Function<Node<Symbol>, Expr> getValueResolver(ResolverFunctionBuilder<Expr> builder) {
+        return builder.ifThenElse()
+                .ifThen(SelectorFunctions.isSingleNonTerminal(), builder.expectSingleNonTerminal().delegateToResolver())
+                .elseCase(node -> new Expr.Value(
+                        Integer.parseInt(((Symbol.Terminal) node.getChildren().getFirst().getValue()).symbol()))
+                );
+    }
+
+    private static Function<Node<Symbol>, Expr> getPowerResolver(ResolverFunctionBuilder<Expr> builder) {
+        return builder.ifThenElse()
+                .ifThen(SelectorFunctions.isSingleNonTerminal(), builder.expectSingleNonTerminal().delegateToResolver())
+                .elseCase(builder.composed()
+                        .from((resolver1, symbolNode) ->
+                                new Expr.Power(new Op(
+                                        SelectorFunctions.findChildAndApply(
+                                                resolver1, nonTerminal("Value"), Expr.class
+                                        ).apply(symbolNode),
+                                        MathOperator.POWER,
+                                        SelectorFunctions.findChildAndApply(
+                                                resolver1, nonTerminal("Power"), Expr.class
+                                        ).apply(symbolNode)
+                                )))
+                        .build());
     }
 
     private Function<Node<Symbol>, Expr> getRule(ResolverFunctionBuilder<Expr> builder, String rule) {
@@ -163,11 +197,6 @@ public class ConstructionTest {
             ruleCount++;
         }
         return latest;
-
-    }
-
-    private MathOperator mapMathOp(String apply) {
-        return null;
     }
 
 
