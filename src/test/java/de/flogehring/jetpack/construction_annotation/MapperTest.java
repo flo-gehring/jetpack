@@ -1,0 +1,103 @@
+package de.flogehring.jetpack.construction_annotation;
+
+import de.flogehring.jetpack.construction.ConstructionVehicleGrammarTest;
+import de.flogehring.jetpack.construction.RuleResolver;
+import de.flogehring.jetpack.datatypes.Node;
+import de.flogehring.jetpack.grammar.Symbol;
+import de.flogehring.jetpack.parse.Grammar;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Optional;
+
+import static de.flogehring.jetpack.grammar.Symbol.nonTerminal;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class MapperTest {
+
+    private static final String GRAMMAR_DEFINITION = """
+            Vehicle  <- Car / Train
+            Car <- "Car" Engine Seats TUEV Extras_List?
+            Engine <- Electric /  Gas / Diesel
+            Electric <- "Electric" Num "kWh100km" Num "HP"
+            Gas <- "Gas" Num "l100km" Num "nox"  Num "HP"
+            Diesel <- ("Diesel" Num "l100km") Num "HP"
+            Seats <- "Seats" Num
+            TUEV <- ("NextHU" Num "-" Num) / ("na")
+            Extras_List <- Extras*
+            Extras <- ("AWD" / "4WD") / "AC"  / "CarPlay"
+            Train <- "Train" Waggons
+            Waggons <- WaggonSpec+
+            WaggonSpec <- PassengerWaggon / PowerWaggon
+            PassengerWaggon <- ("Passenger" Num "Seats" Num "Standing" (Num "Bikes")?)
+            PowerWaggon <- Engine
+            Num <- "[0-9]+"
+            """;
+
+
+    @FromRule("Vehicle")
+    @OnRule(rule = "Car", clazz = Car.class)
+    @OnRule(rule = "Train", clazz = Train.class)
+    public interface Vehicle {
+
+    }
+
+    public class Car implements Vehicle {
+
+        @FromChild(index = 1)
+        public Engine engine;
+        @FromChild(index = 2)
+        public Seats seats;
+        @FromChild(index = 4)
+        List<Extra> extras;
+    }
+
+
+    @Test
+    void test() throws Exception {
+
+        String car = "Car Electric 10 kWh100Km 200 HP Seats 5 NextHu 10 - 25 AC CarPlay";
+        Grammar grammar = Grammar.of(GRAMMAR_DEFINITION).getEither();
+        Node<Symbol> parsed = grammar.parse(car).getEither();
+        Car expected = new Car();
+        Electric electric = new Electric();
+        electric.numHp = 200;
+        expected.engine = electric;
+        Seats seats = new Seats();
+        seats.seats = 5;
+        expected.seats = seats;
+        assertEquals(expected, Mapper.map(parsed, Car.class));
+    }
+
+    public enum Extra {
+        AC,
+        AWD,
+        CAR_PLAY
+    }
+
+
+    public class Train implements Vehicle {
+
+    }
+
+    @OnRule(rule = "Gas", clazz = Gas.class)
+    @OnRule(rule = "Electric", clazz = Electric.class)
+    interface Engine {
+
+    }
+
+    public class Electric implements Engine {
+        @FromChild(index = 3)
+        int numHp;
+    }
+
+    public class Gas implements Engine {
+        int numHp;
+    }
+
+    @FromRule("Seats")
+    public class Seats {
+        @FromChild(index = 1)
+        public int seats;
+    }
+}

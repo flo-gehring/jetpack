@@ -1,5 +1,7 @@
 package de.flogehring.jetpack.util;
 
+import java.text.MessageFormat;
+import java.util.List;
 import java.util.Map;
 
 public class Check {
@@ -11,6 +13,13 @@ public class Check {
         if (!condition) {
             throw new RuntimeException(message);
         }
+    }
+
+    public static <T> T requireSingleItem(List<T> list, String message) {
+        if (list.size() != 1) {
+            throw new RuntimeException(MessageFormat.format("Expected a single item, got {0}. {1}", list.size(), message));
+        }
+        return list.getFirst();
     }
 
     public static <T, S> boolean hasKey(Map<T, S> map, T key) {
