@@ -4,15 +4,13 @@ import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.util.Check;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.text.MessageFormat;
 
+@SuppressWarnings("unchecked")
 public class Mapper {
 
     public static <T> T map(Node<Symbol> node, Class<T> clazz) throws Exception {
@@ -22,6 +20,14 @@ public class Mapper {
             T instance;
             if (clazz.isInterface()) {
                 instance = mapInterface(node, clazz);
+            } else if (clazz.isEnum()) {
+                String s = getTerminalValue(node);
+                instance = Arrays.stream(clazz.getEnumConstants())
+                        .filter(enumConstant -> enumConstant.toString().equals(s))
+                        .findAny()
+                        .orElseThrow(() -> new RuntimeException("Can't find ENUM Constant " + s + " for " + clazz));
+            } else if (clazz.isPrimitive()) {
+                instance = (T) getPrimitiveValue(clazz, getTerminalValue(node));
             } else {
                 instance = mapConcreteClass(node, clazz, name);
             }
@@ -39,41 +45,74 @@ public class Mapper {
             throw new IllegalArgumentException("No matching rule found for class " + clazz.getSimpleName());
         }
         for (Field field : clazz.getFields()) {
-            FromChild childAnno = field.getAnnotation(FromChild.class);
-            if (childAnno != null) {
-                Node<Symbol> childNode = node.getChildren().get(childAnno.index());
-                Class<?> fieldType = field.getType();
-                if (fieldType.equals(String.class)) {
-                    field.set(instance, getTerminalValue(childNode));
-                } else if (fieldType.isEnum()) {
-                    field.set(
-                            instance,
-                            fieldType.getMethod("valueOf", String.class)
-                                    .invoke(null, getTerminalValue(childNode))
-                    );
-                } else if (fieldType.equals(Integer.class)) {
-                    field.set(instance,
-                            Integer.parseInt(getTerminalValue(childNode))
-                    );
-                } else if (fieldType.isAnnotationPresent(FromRule.class)) {
-                    Object nested = map(childNode, fieldType);
-                    field.set(instance, nested);
-                } else if (List.class.isAssignableFrom(fieldType)) {
-                    Type genericType = ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-                    Class<?> listElementType = (Class<?>) genericType;
-                    List<Object> list = new ArrayList<>();
-                    for (Node<Symbol> grandChild : childNode.getChildren()) {
-                        if (listElementType.equals(String.class)) {
-                            list.add(getTerminalValue(grandChild));
-                        } else if (listElementType.isAnnotationPresent(FromRule.class)) {
-                            list.add(map(grandChild, listElementType));
-                        }
-                    }
-                    field.set(instance, list);
-                }
+            FromChild childAnnotation = field.getAnnotation(FromChild.class);
+            if (childAnnotation != null) {
+                Node<Symbol> childNode = node.getChildren().get(childAnnotation.index());
+                Object valueForField;
+                valueForField = getObject(field, childNode);
+                field.set(instance, valueForField);
             }
         }
         return instance;
+    }
+
+    private static Object getObject(Field field, Node<Symbol> childNode) throws Exception {
+        Object result;
+        Class<?> fieldType = field.getType();
+        if (fieldType.equals(String.class)) {
+            result = getTerminalValue(childNode);
+        } else if (fieldType.isEnum()) {
+            result = fieldType.getMethod("valueOf", String.class)
+                    .invoke(null, getTerminalValue(childNode));
+        } else if (fieldType.equals(Integer.class)) {
+            result = Integer.parseInt(getTerminalValue(childNode));
+        } else if (fieldType.isPrimitive()) {
+            result = getPrimitiveValue(fieldType, getTerminalValue(childNode));
+        } else if (fieldType.isAnnotationPresent(FromRule.class)) {
+            result = map(childNode, fieldType);
+        } else if (List.class.isAssignableFrom(fieldType)) {
+            result = parseList(field, childNode);
+        } else if (fieldType.isInterface()) {
+            result = map(childNode, fieldType);
+        } else {
+            throw new RuntimeException("Could not get value for field " + field);
+        }
+        return result;
+    }
+
+    private static List<Object> parseList(Field field, Node<Symbol> childNode) throws Exception {
+        List<Object> list = new ArrayList<>();
+        ParameterizedType listType = (ParameterizedType) field.getGenericType();
+        Class<?> listElementType = (Class<?>) listType.getActualTypeArguments()[0];
+        for (Node<Symbol> grandChild : childNode.getChildren()) {
+            list.add(map(grandChild, listElementType));
+        }
+        return list;
+    }
+
+    private static <T> Object getPrimitiveValue(Class<T> fieldType, String terminalValue) {
+        if (fieldType.equals(Integer.TYPE)) {
+            return Integer.parseInt(terminalValue);
+        } else if (fieldType.equals(Byte.TYPE)) {
+            return Byte.parseByte(terminalValue, 8);
+        } else if (fieldType.equals(Boolean.TYPE)) {
+            // TODO Attach Meta-Info to custom parse True and False
+            return Boolean.parseBoolean(terminalValue);
+        } else if (fieldType.equals(Character.TYPE)) {
+            // TODO Parse char Values
+            throw new RuntimeException("Can't parse Char values yet");
+        } else if (fieldType.equals(Long.TYPE)) {
+            return Long.valueOf(terminalValue);
+        } else if (fieldType.equals(Float.TYPE)) {
+            return Float.parseFloat(terminalValue);
+        } else if (fieldType.equals(Short.TYPE)) {
+            return Short.valueOf(terminalValue);
+        } else if (fieldType.equals(Double.TYPE)) {
+            // TODO Attach Meta-Info to parse Numbers by a custom format
+            return Double.parseDouble(terminalValue);
+        } else {
+            throw new RuntimeException("Error parsing type " + fieldType + " as primitive value");
+        }
     }
 
     private static <T> T mapInterface(Node<Symbol> node, Class<T> clazz) throws Exception {
@@ -94,10 +133,13 @@ public class Mapper {
         if (childNode.getValue() instanceof Symbol.Terminal(var text)) {
             return text;
         } else {
-            throw new RuntimeException(MessageFormat.format(
-                    "Expected Terminal value, got Non-Terminal-Rule {0}",
-                    ((Symbol.NonTerminal) childNode.getValue()).name()
-            ));
+            List<Node<Symbol>> grandChildren = childNode.getChildren();
+            Check.requireSingleItem(grandChildren, "Expected either Terminal value or node with single child");
+            Node<Symbol> grandChild = grandChildren.getFirst();
+            if (grandChild.getValue() instanceof Symbol.Terminal(var text)) {
+                return text;
+            }
+            throw new RuntimeException("Expected either Child to be terminal or have one terminal grandchild, got: " + childNode);
         }
     }
 }
