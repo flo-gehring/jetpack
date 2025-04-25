@@ -1,4 +1,4 @@
-package de.flogehring.jetpack.construction_annotation;
+package de.flogehring.jetpack.annotationmapper;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface FromRule {
-    String value();
+public @interface MapAbstract {
+    OnRule[] value();
 }

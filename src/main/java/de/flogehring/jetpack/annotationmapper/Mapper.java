@@ -1,4 +1,4 @@
-package de.flogehring.jetpack.construction_annotation;
+package de.flogehring.jetpack.annotationmapper;
 
 import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.Symbol;

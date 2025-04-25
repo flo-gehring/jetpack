@@ -4,9 +4,7 @@ import de.flogehring.jetpack.datatypes.MemoTable;
 import de.flogehring.jetpack.datatypes.MemoTableLookup;
 import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.Symbol;
-import de.flogehring.jetpack.util.Check;
 
-import java.util.List;
 import java.util.function.Function;
 
 public class RuleResolver {

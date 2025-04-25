@@ -1,4 +1,4 @@
-package de.flogehring.jetpack.construction_annotation;
+package de.flogehring.jetpack.annotationmapper;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
