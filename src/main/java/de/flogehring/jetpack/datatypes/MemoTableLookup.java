@@ -1,4 +1,4 @@
-package de.flogehring.jetpack.parse;
+package de.flogehring.jetpack.datatypes;
 
 public sealed interface MemoTableLookup<T> {
 

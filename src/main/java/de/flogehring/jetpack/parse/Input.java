@@ -1,13 +1,9 @@
 package de.flogehring.jetpack.parse;
 
-import de.flogehring.jetpack.datatypes.Tuple;
 import de.flogehring.jetpack.util.Check;
 
 import java.text.MessageFormat;
-import java.util.Collections;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.*;
 
 public class Input {
 
@@ -58,32 +54,22 @@ public class Input {
         return token.substring(offsetInToken);
     }
 
-    public Tuple<String, String> splitInput(int position) {
-        Map.Entry<Integer, String> floorEntry = tokens.floorEntry(position);
-        int startOfToken = floorEntry.getKey();
-        int offsetInToken = position - startOfToken;
-        String token = floorEntry.getValue();
-        Check.require(
-                offsetInToken <= token.length(),
-                MessageFormat.format(
+    // TODO Test
+    public String left(int position) {
+        SortedMap<Integer, String> headMap = tokens.headMap(position);
+        String startOfToken = getStartOfToken(position);
+        return headMap.values().stream().reduce(" ", String::concat) + (startOfToken.isEmpty() ? "" : " " + startOfToken);
+    }
 
-                        "Out of bounds index {0} for token {1} starting at {2} with length {3}" +
-                                " -> Offset {4} too large",
-                        position, token, startOfToken, token.length(), offsetInToken
-                )
-        );
-        String left = "";
-        if (floorEntry.getKey() > 0) {
-            left = String.join(" ", tokens.subMap(0, true, startOfToken, false)
-                    .values());
-        }
-        left += " " + token.substring(0, offsetInToken);
-        String right = token.substring(offsetInToken) + " ";
-        if (floorEntry.getKey() < tokens.size()) {
-            right += String.join(" ", tokens.subMap(startOfToken, false, tokens.lastKey(), false)
-                    .values());
-        }
-        return new Tuple<>(left, right);
+    // TODO Test
+    public String right(int position) {
+        SortedMap<Integer, String> headMap = tokens.tailMap(position);
+        String remainingToken = getRemainingToken(position);
+        return  (remainingToken.isEmpty() ? "" : " " + remainingToken) + headMap.values().stream().reduce(" ", String::concat);
+    }
 
+    private String getStartOfToken(int position) {
+        Map.Entry<Integer, String> entry = Objects.requireNonNull(tokens.floorEntry(position));
+        return entry.getValue().substring(0, position - entry.getKey());
     }
 }

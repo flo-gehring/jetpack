@@ -6,12 +6,11 @@ import lombok.Getter;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 @EqualsAndHashCode
 public class Node<S> {
 
-    @Getter
     private final S value;
-    @Getter
     private final List<Node<S>> children;
 
     private Node(S value, List<Node<S>> children) {

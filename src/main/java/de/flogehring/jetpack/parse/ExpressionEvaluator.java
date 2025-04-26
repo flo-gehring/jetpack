@@ -3,7 +3,7 @@ package de.flogehring.jetpack.parse;
 import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.grammar.Expression;
 
-public interface ExpressionEvaluator {
+interface ExpressionEvaluator {
 
     Either<ConsumedExpression, String> resolveExpression(
             Expression expression,

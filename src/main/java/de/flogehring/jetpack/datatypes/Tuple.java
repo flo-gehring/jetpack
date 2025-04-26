@@ -1,4 +1,4 @@
 package de.flogehring.jetpack.datatypes;
 
-public record Tuple<S, T>(S first, T second) {
+public record Tuple<T, S>(T left, S right) {
 }

@@ -1,10 +1,9 @@
-package de.flogehring.jetpack.grammar;
+package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.datatypes.Node;
-import de.flogehring.jetpack.parse.ConsumedExpression;
-import de.flogehring.jetpack.parse.Evaluate;
-import de.flogehring.jetpack.parse.Input;
+import de.flogehring.jetpack.grammar.Expression;
+import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.util.Check;
 import lombok.Getter;
 import lombok.ToString;
@@ -178,7 +177,6 @@ public class Grammar {
         throw new RuntimeException("Unexpected Nonterminal in Grammar Definition");
     }
 
-
     public Grammar(String startingRule, Map<String, Expression> rules) {
         Check.requireNotNull("The parameters to Grammar can't be null.",
                 startingRule, rules);
@@ -220,7 +218,11 @@ public class Grammar {
             }
             String errorMessage = "Could only match " + consumedExpression.parsePosition() +
                     " of " + input.length() + " characters";
+            String left = input.left(consumedExpression.parsePosition());
+            String right = input.right(consumedExpression.parsePosition());
             System.out.println(errorMessage);
+            System.out.println("Parsed"  + left);
+            System.out.println("Unparsed" + right);
             return Either.or(
                     errorMessage
             );

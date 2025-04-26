@@ -1,8 +1,10 @@
-package de.flogehring.jetpack.grammar;
+package de.flogehring.jetpack.parse;
 
 
 import de.flogehring.jetpack.datatypes.Either;
 import de.flogehring.jetpack.datatypes.Node;
+import de.flogehring.jetpack.grammar.Expression;
+import de.flogehring.jetpack.grammar.Symbol;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -13,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import static de.flogehring.jetpack.grammar.Expression.*;
-import static de.flogehring.jetpack.grammar.ParseTreeBuilder.createTree;
-import static de.flogehring.jetpack.grammar.ParseTreeBuilder.terminalLeaf;
+import static de.flogehring.jetpack.parse.ParseTreeBuilder.createTree;
+import static de.flogehring.jetpack.parse.ParseTreeBuilder.terminalLeaf;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GrammarTest {
@@ -105,7 +107,6 @@ public class GrammarTest {
 
             @Test
             void createGrammar() {
-
                 Grammar actual = Grammar.of(grammarByText).getEither();
                 Map<String, Expression> actualRules = actual.getRules();
                 Map<String, Expression> expectedRules = testGrammar.getRules();

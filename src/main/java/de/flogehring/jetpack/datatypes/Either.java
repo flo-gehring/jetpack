@@ -1,7 +1,5 @@
 package de.flogehring.jetpack.datatypes;
 
-import de.flogehring.jetpack.grammar.Grammar;
-
 import java.util.function.Function;
 
 public sealed interface Either<T, S> {

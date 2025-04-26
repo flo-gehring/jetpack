@@ -1,6 +1,8 @@
 package de.flogehring.jetpack.parse;
 
 import de.flogehring.jetpack.datatypes.Either;
+import de.flogehring.jetpack.datatypes.MemoTable;
+import de.flogehring.jetpack.datatypes.MemoTableLookup;
 import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.*;
 
@@ -18,7 +20,7 @@ import static de.flogehring.jetpack.parse.EvaluateTerminal.applyTerminal;
  * <a href="https://www.jstage.jst.go.jp/article/ipsjjip/29/0/29_174/_pdf"> Umeda and Maeda Paper "Packrat Parsers Can Support Multiple Left-recursive
  * Calls at the Same Position"</a>
  */
-public class Evaluate {
+class Evaluate {
 
     private Evaluate() {
     }
@@ -87,11 +89,11 @@ public class Evaluate {
             Symbol.NonTerminal nonTerminal
     ) {
         final MemoTableKey key = new MemoTableKey(nonTerminal.name(), currentPosition);
-        final MemoTable<LookupTableEntry> memoTable = parsingState.getLookup();
-        final MemoTableLookup<LookupTableEntry> lookup = memoTable.get(key);
+        final MemoTable<MemoTableKey, ParsingStateLookup> memoTable = parsingState.getLookup();
+        final MemoTableLookup<ParsingStateLookup> lookup = memoTable.get(key);
         return switch (lookup) {
-            case MemoTableLookup.NoHit<LookupTableEntry>() -> {
-                memoTable.insert(key, new LookupTableEntry.Fail(false));
+            case MemoTableLookup.NoHit<ParsingStateLookup>() -> {
+                memoTable.insert(key, new ParsingStateLookup.Fail(false));
                 Expression ruleDef = grammar.apply(nonTerminal);
                 Either<ConsumedExpression, String> answer = evaluateExpressionWithApplyRule(
                         ruleDef,
@@ -101,7 +103,7 @@ public class Evaluate {
                         parsingState
                 );
                 updateState(key, answer, parsingState);
-                LookupTableEntry m = ((MemoTableLookup.Hit<LookupTableEntry>) memoTable.get(key)).value();
+                ParsingStateLookup m = ((MemoTableLookup.Hit<ParsingStateLookup>) memoTable.get(key)).value();
                 if (m.growLr()) {
                     answer = growLr(
                             nonTerminal,
@@ -119,19 +121,19 @@ public class Evaluate {
                         )
                 );
             }
-            case MemoTableLookup.Hit<LookupTableEntry>(var entry) -> {
+            case MemoTableLookup.Hit<ParsingStateLookup>(var entry) -> {
                 Either<ConsumedExpression, String> answer;
-                if (entry instanceof LookupTableEntry.Fail(var _)) {
-                    memoTable.insert(key, new LookupTableEntry.MisMatch(
+                if (entry instanceof ParsingStateLookup.Fail(var _)) {
+                    memoTable.insert(key, new ParsingStateLookup.MisMatch(
                             true
                     ));
                     answer = Either.or("Detected Left recursion");
                 } else {
                     answer = switch (entry) {
-                        case LookupTableEntry.MisMatch _ -> Either.or("Previous parsing failure");
-                        case LookupTableEntry.Match(var parsePosition, var tree, var _) ->
+                        case ParsingStateLookup.MisMatch _ -> Either.or("Previous parsing failure");
+                        case ParsingStateLookup.Match(var parsePosition, var tree, var _) ->
                                 Either.ofThis(new ConsumedExpression(parsePosition, tree));
-                        case LookupTableEntry.Fail ignored -> throw new RuntimeException();
+                        case ParsingStateLookup.Fail ignored -> throw new RuntimeException();
                     };
                 }
                 yield answer.map(
@@ -148,22 +150,19 @@ public class Evaluate {
             Either<ConsumedExpression, String> answer,
             ParsingState parsingState
     ) {
-        MemoTable<LookupTableEntry> lookup = parsingState.getLookup();
-        LookupTableEntry entry = ((MemoTableLookup.Hit<LookupTableEntry>) lookup.get(key)).value();
+        MemoTable<MemoTableKey, ParsingStateLookup> lookup = parsingState.getLookup();
+        ParsingStateLookup entry = ((MemoTableLookup.Hit<ParsingStateLookup>) lookup.get(key)).value();
         switch (answer) {
-            case Either.This<ConsumedExpression, String>(var consumedExpression) -> {
-                lookup.insert(
-                        key,
-                        new LookupTableEntry.Match(
-                                consumedExpression.parsePosition(),
-                                consumedExpression.parseTree(),
-                                entry.growLr()
-                        )
-                );
-                parsingState.setMaxPos(consumedExpression.parsePosition());
-            }
+            case Either.This<ConsumedExpression, String>(var consumedExpression) -> lookup.insert(
+                    key,
+                    new ParsingStateLookup.Match(
+                            consumedExpression.parsePosition(),
+                            consumedExpression.parseTree(),
+                            entry.growLr()
+                    )
+            );
             case Either.Or<ConsumedExpression, String>(var _) -> lookup.insert(
-                    key, new LookupTableEntry.MisMatch(entry.growLr())
+                    key, new ParsingStateLookup.MisMatch(entry.growLr())
             );
         }
     }
@@ -190,7 +189,7 @@ public class Evaluate {
                     new HashSet<>(List.of(nonTerminal))
             );
             if (currentAnswer instanceof Either.This<ConsumedExpression, String>(var consumedExpression)) {
-                if (consumedExpression.parsePosition() <= oldPosition){
+                if (consumedExpression.parsePosition() <= oldPosition) {
                     break;
                 }
                 oldPosition = consumedExpression.parsePosition();
@@ -309,7 +308,7 @@ public class Evaluate {
                 nonTerminal.name(),
                 currentPosition
         );
-        MemoTableLookup<LookupTableEntry> previousLookup = parsingState.getLookup().get(key);
+        MemoTableLookup<ParsingStateLookup> previousLookup = parsingState.getLookup().get(key);
         int previousLookupParsePosition = getPreviousLookupParsePositionOrDefault(currentPosition, previousLookup);
         if (answer instanceof Either.Or<ConsumedExpression, String>) {
             answer = getAnswerFromPreviousLookupGrowLr(previousLookup);
@@ -332,25 +331,25 @@ public class Evaluate {
 
     private static int getPreviousLookupParsePositionOrDefault(
             int defaultPosition,
-            MemoTableLookup<LookupTableEntry> previousLookup
+            MemoTableLookup<ParsingStateLookup> previousLookup
     ) {
         return switch (previousLookup) {
-            case MemoTableLookup.NoHit<LookupTableEntry> _ -> defaultPosition;
-            case MemoTableLookup.Hit<LookupTableEntry> hit -> switch (hit.value()) {
-                case LookupTableEntry.Match(var parsePosition, var _, var _) -> parsePosition;
-                default -> defaultPosition;
-            };
+            case MemoTableLookup.NoHit<ParsingStateLookup> _ -> defaultPosition;
+            case MemoTableLookup.Hit<ParsingStateLookup> hit ->
+                    hit.value() instanceof ParsingStateLookup.Match(var parsePosition, var _, var _)
+                            ? parsePosition
+                            : defaultPosition;
         };
     }
 
-    private static Either<ConsumedExpression, String> getAnswerFromPreviousLookupGrowLr(MemoTableLookup<LookupTableEntry> previousLookup) {
+    private static Either<ConsumedExpression, String> getAnswerFromPreviousLookupGrowLr(MemoTableLookup<ParsingStateLookup> previousLookup) {
         return switch (previousLookup) {
-            case MemoTableLookup.NoHit<LookupTableEntry> _ -> Either.or("No Previous hit");
-            case MemoTableLookup.Hit<LookupTableEntry>(var entry) -> switch (entry) {
-                case LookupTableEntry.Match(int parsePosition, var parseTree, var _) -> Either.ofThis(
+            case MemoTableLookup.NoHit<ParsingStateLookup> _ -> Either.or("No Previous hit");
+            case MemoTableLookup.Hit<ParsingStateLookup>(var entry) -> switch (entry) {
+                case ParsingStateLookup.Match(int parsePosition, var parseTree, var _) -> Either.ofThis(
                         new ConsumedExpression(parsePosition, parseTree)
                 );
-                case LookupTableEntry.Fail _, LookupTableEntry.MisMatch _ -> Either.or(
+                case ParsingStateLookup.Fail _, ParsingStateLookup.MisMatch _ -> Either.or(
                         "Previous parsing failure"
                 );
             };
