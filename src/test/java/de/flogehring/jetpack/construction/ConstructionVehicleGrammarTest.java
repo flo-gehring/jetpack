@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static de.flogehring.jetpack.construction.SelectorFunctions.*;
+import static de.flogehring.jetpack.construction.ResolverFunctionHelper.*;
 import static de.flogehring.jetpack.grammar.Symbol.nonTerminal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -43,7 +43,7 @@ public class ConstructionVehicleGrammarTest {
                 .composed()
                 .from(ConstructionVehicleGrammarTest::getCar)
                 .build();
-        resolver.insert(nonTerminal("Num"), SelectorFunctions.getTerminalValue(0).andThen(Integer::valueOf));
+        resolver.insert(nonTerminal("Num"), ResolverFunctionHelper.getTerminalValue(0).andThen(Integer::valueOf));
         resolver.insert(nonTerminal("Car"), carRule);
         resolver.insert(nonTerminal("Vehicle"), vehicleFunction);
         resolver.insert(nonTerminal("Engine"), getEngineRule(resolver));
@@ -60,7 +60,7 @@ public class ConstructionVehicleGrammarTest {
                                         .apply(s)
                                         .toString()
                 ).build()));
-        resolver.insert(nonTerminal("Extras"), SelectorFunctions.getTerminalValue(0).andThen(CarExtras::fromPrintable));
+        resolver.insert(nonTerminal("Extras"), ResolverFunctionHelper.getTerminalValue(0).andThen(CarExtras::fromPrintable));
 
         resolver.insert(nonTerminal("Train"), getWaggons(resolver));
         resolver.insert(nonTerminal("Waggons"), ResolverFunctionBuilder.init(List.class, resolver)
@@ -138,7 +138,7 @@ public class ConstructionVehicleGrammarTest {
     }
 
     private static Function<Node<Symbol>, Boolean> getWhen(String electric) {
-        return SelectorFunctions.getTerminalValue(0).andThen(type -> type.equals(electric));
+        return ResolverFunctionHelper.getTerminalValue(0).andThen(type -> type.equals(electric));
     }
 
     private static Vehicle.Car getCar(RuleResolver r, Node<Symbol> node) {

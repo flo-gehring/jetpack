@@ -19,17 +19,6 @@ public class RuleResolverBuilder {
 
     public <T> RuleResolverBuilder addRule(
             Symbol.NonTerminal nonTerminal,
-            Function<RuleResolver, Function<Node<Symbol>, T>> construct
-    ) {
-        ruleResolver.insert(
-                nonTerminal,
-                construct.apply(ruleResolver)
-        );
-        return this;
-    }
-
-    public <T> RuleResolverBuilder addRuleWithFunctionBuilder(
-            Symbol.NonTerminal nonTerminal,
             Class<T> target,
             Function<ResolverFunctionBuilder<T>, Function<Node<Symbol>, T>> construct
     ) {
@@ -40,10 +29,7 @@ public class RuleResolverBuilder {
         return this;
     }
 
-
-    public RuleResolver get() {
+    public RuleResolver build() {
         return ruleResolver;
     }
-
-
 }

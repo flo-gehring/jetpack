@@ -48,15 +48,14 @@ public class Mapper {
             FromChild childAnnotation = field.getAnnotation(FromChild.class);
             if (childAnnotation != null) {
                 Node<Symbol> childNode = node.getChildren().get(childAnnotation.index());
-                Object valueForField;
-                valueForField = getObject(field, childNode);
+                Object valueForField = mapValue(field, childNode);
                 field.set(instance, valueForField);
             }
         }
         return instance;
     }
 
-    private static Object getObject(Field field, Node<Symbol> childNode) throws Exception {
+    private static Object mapValue(Field field, Node<Symbol> childNode) throws Exception {
         Object result;
         Class<?> fieldType = field.getType();
         if (fieldType.equals(String.class)) {
@@ -134,8 +133,10 @@ public class Mapper {
             return text;
         } else {
             List<Node<Symbol>> grandChildren = childNode.getChildren();
-            Check.requireSingleItem(grandChildren, "Expected either Terminal value or node with single child");
-            Node<Symbol> grandChild = grandChildren.getFirst();
+            Node<Symbol> grandChild = Check.requireSingleItem(
+                    grandChildren,
+                    "Expected either Terminal value or node with single child"
+            );
             if (grandChild.getValue() instanceof Symbol.Terminal(var text)) {
                 return text;
             }

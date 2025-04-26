@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class SelectorFunctions {
+public class ResolverFunctionHelper {
 
-    private SelectorFunctions() {
+    private ResolverFunctionHelper() {
     }
 
     public static Function<Node<Symbol>, Symbol.NonTerminal> selectNonterminal(int position) {
@@ -29,10 +29,6 @@ public class SelectorFunctions {
                         t.getName(), position, childrenOfClass.size(), node.toString())
         );
         return t.cast(childrenOfClass.get(position).getValue());
-    }
-
-    public static Function<Node<Symbol>, Symbol.NonTerminal> selectNonterminalAbsolute(int position) {
-        return symbol -> selectClassAbolute(symbol, position, Symbol.NonTerminal.class);
     }
 
     public static Function<Node<Symbol>, String> getTerminalValueAbsolute(int position) {
