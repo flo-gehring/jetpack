@@ -57,8 +57,30 @@ class EvaluateOperators {
                     currentPosition,
                     evaluator
             );
+            case Operator.And (var expression) -> consumeAnd(
+                    expression,
+                    input,
+                    currentPosition,
+                    evaluator
+            );
             case Operator.Group(var expression) -> evaluator.resolveExpression(expression, input, currentPosition);
         };
+    }
+
+    private static Either<ConsumedExpression, String> consumeAnd(
+            Expression expression,
+            Input input,
+            int currentPosition,
+            ExpressionEvaluator evaluator
+    ) {
+        Either<ConsumedExpression, String> resolveExpression = evaluator.resolveExpression(
+                expression,
+                input,
+                currentPosition
+        );
+       return resolveExpression.map(
+               _ -> new ConsumedExpression(currentPosition, List.of())
+       );
     }
 
     private static Either<ConsumedExpression, String> consumeNot(Expression expression, Input input, int currentPosition, ExpressionEvaluator evaluator) {

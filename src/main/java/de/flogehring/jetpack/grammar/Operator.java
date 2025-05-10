@@ -22,6 +22,7 @@ public sealed interface Operator extends Expression {
 
         public Star {
             Check.requireNotNull("Expression for *-Operator can't be null", exp);
+            Check.require(! (exp instanceof Star), "*-Operators can't be nested without quantifiable input e.g. no a**");
         }
     }
 
@@ -50,6 +51,12 @@ public sealed interface Operator extends Expression {
 
         public Not {
             Check.requireNotNull("Expression of !-Operator can't be null", exp);
+        }
+    }
+
+    record And(Expression exp) implements Operator {
+        public And  {
+            Check.requireNotNull("Expression of &-Operator can't be null");
         }
     }
 }

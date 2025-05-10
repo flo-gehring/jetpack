@@ -12,6 +12,9 @@ public sealed interface Symbol extends Expression {
         return new NonTerminal(s);
     }
 
+    static Empty empty() {
+        return new Empty();
+    }
     record Terminal(String symbol) implements Symbol {
 
         public Terminal {
@@ -24,5 +27,8 @@ public sealed interface Symbol extends Expression {
         public NonTerminal {
             Check.requireNotEmpty(name);
         }
+    }
+
+    record Empty() implements Symbol {
     }
 }

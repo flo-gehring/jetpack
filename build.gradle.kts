@@ -21,10 +21,11 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     compileOnly("org.projectlombok:lombok:1.18.36")
-    annotationProcessor ("org.projectlombok:lombok:1.18.36")
+    annotationProcessor("org.projectlombok:lombok:1.18.36")
 
-    testCompileOnly( "org.projectlombok:lombok:1.18.36")
-    testAnnotationProcessor ("org.projectlombok:lombok:1.18.36")
+    testCompileOnly("org.projectlombok:lombok:1.18.36")
+    testImplementation("org.assertj:assertj-core:3.11.1")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.36")
 }
 
 tasks.named<Test>("test") {

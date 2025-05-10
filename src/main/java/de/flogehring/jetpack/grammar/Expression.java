@@ -13,30 +13,35 @@ public sealed interface Expression permits Symbol, Operator {
         return new Symbol.NonTerminal(symbol);
     }
 
-    static Expression sequence(Expression first, Expression second) {
+    static Operator.Sequence sequence(Expression first, Expression second) {
         return new Operator.Sequence(first, second);
     }
 
     static Expression sequence(List<Expression> expressions) {
         // TODO create empty expression and return
         Check.require(!expressions.isEmpty(), "Can't construct sequence from empty list");
-        if(expressions.size() == 1) {
+        if (expressions.isEmpty()) {
+            return Symbol.empty();
+        }
+        if (expressions.size() == 1) {
             return expressions.getFirst();
         }
         return sequence(expressions.getFirst(),
-                expressions.get(1), expressions.subList(2,expressions.size()).toArray(new Expression[]{})
+                expressions.get(1), expressions.subList(2, expressions.size()).toArray(new Expression[]{})
         );
     }
 
     static Expression orderedChoice(List<Expression> expressions) {
-        Check.require(!expressions.isEmpty(), "Can't construct ordered choice from empty list");
-        if(expressions.size() == 1) {
+        if (expressions.isEmpty()) {
+            return Expression.empty();
+        }
+        if (expressions.size() == 1) {
             return expressions.getFirst();
         }
         return orderedChoice(
                 expressions.getFirst(),
                 expressions.get(1),
-                expressions.subList(2,expressions.size()).toArray(new Expression[]{})
+                expressions.subList(2, expressions.size()).toArray(new Expression[]{})
         );
     }
 
@@ -83,7 +88,7 @@ public sealed interface Expression permits Symbol, Operator {
         );
     }
 
-    static Expression orderedChoice(Expression firstChoice, Expression secondChoice, Expression ... nextChoices) {
+    static Expression orderedChoice(Expression firstChoice, Expression secondChoice, Expression... nextChoices) {
         return applyOperatorInOrder(Operator.OrderedChoice::new, firstChoice, secondChoice, nextChoices);
     }
 
@@ -100,10 +105,10 @@ public sealed interface Expression permits Symbol, Operator {
     }
 
     static Expression and(Expression expression) {
-        throw new RuntimeException("Not implemented yet");
+        return new Operator.And(expression);
     }
 
     static Expression empty() {
-        throw new RuntimeException("Not Implemented yet");
+        return Symbol.empty();
     }
 }
