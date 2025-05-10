@@ -1,15 +1,18 @@
 package de.flogehring.jetpack.annotationmapper;
 
+import de.flogehring.jetpack.annotationmapper.creationstrategies.CreationStrategyConstructor;
+import de.flogehring.jetpack.annotationmapper.creationstrategies.CreationStrategyReflection;
+import de.flogehring.jetpack.annotationmapper.creationstrategies.CreatorConstructor;
 import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.util.Check;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unchecked")
@@ -34,11 +37,7 @@ public class Mapper {
             if (clazz.isInterface()) {
                 instance = mapInterface(node, clazz);
             } else if (clazz.isEnum()) {
-                String s = getTerminalValue(node);
-                instance = Arrays.stream(clazz.getEnumConstants())
-                        .filter(enumConstant -> enumConstant.toString().equals(s))
-                        .findAny()
-                        .orElseThrow(() -> new RuntimeException("Can't find ENUM Constant " + s + " for " + clazz));
+                instance = mapEnum(node, clazz);
             } else if (clazz.isPrimitive()) {
                 instance = (T) getPrimitiveValue(clazz, getTerminalValue(node));
             } else {
@@ -50,7 +49,40 @@ public class Mapper {
         }
     }
 
+    private <T> T mapEnum(Node<Symbol> node, Class<T> clazz) {
+        T instance;
+        String s = getTerminalValue(node);
+        instance = Arrays.stream(clazz.getEnumConstants())
+                .filter(enumConstant -> enumConstant.toString().equals(s))
+                .findAny()
+                .orElseThrow(() -> new RuntimeException("Can't find ENUM Constant " + s + " for " + clazz));
+        return instance;
+    }
+
     private <T> T mapConcreteClass(Node<Symbol> node, Class<T> clazz, String name) throws Exception {
+        List<Annotation> creationStrategies = Arrays.stream(clazz.getAnnotations()).filter(
+                annotation ->
+                        Set.of(CreationStrategyConstructor.class, CreationStrategyReflection.class).contains(annotation.annotationType())
+        ).toList();
+        Annotation creationStrategy = Check.requireSingleItem(
+                creationStrategies,
+                "Not Exactly one creation strategy for " + clazz.getName() + " found"
+        );
+        T instance;
+        if(creationStrategy.annotationType().equals(CreationStrategyReflection.class)) {
+            instance = createInstanceViaReflection(node, clazz, name);
+        }
+        else if(creationStrategy.annotationType().equals(CreationStrategyConstructor.class)) {
+            instance = createInstanceViaConstructor(node, clazz);
+        }
+        else {
+            throw new RuntimeException("Unknown CreationStrategy: " + creationStrategy.annotationType().getName());
+        }
+        return instance;
+
+    }
+
+    private <T> T createInstanceViaReflection(Node<Symbol> node, Class<T> clazz, String name) throws Exception {
         T instance;
         instance = clazz.getConstructor().newInstance();
         FromRule rule = clazz.getAnnotation(FromRule.class);
@@ -66,6 +98,41 @@ public class Mapper {
             }
         }
         return instance;
+    }
+
+    private <T> T createInstanceViaConstructor(
+            Node<Symbol> node,
+            Class<T> clazz
+    ) throws Exception {
+        T instance;
+        Map<String, Object> fields = new HashMap<>();
+        for (Field field : clazz.getDeclaredFields()) {
+            FromChild childAnnotation = field.getAnnotation(FromChild.class);
+            if (childAnnotation != null) {
+                Node<Symbol> childNode = node.getChildren().get(childAnnotation.index());
+                Object valueForField = mapValue(field, childNode);
+                fields.put(field.getName(), valueForField);
+            }
+        }
+        Constructor<?> declaredConstructors = getMatchingConstructor(clazz);
+        CreatorConstructor annotation = declaredConstructors.getAnnotation(CreatorConstructor.class);
+        String[] order = annotation.order();
+        Object[] arguments = new Object[order.length];
+        for(int i = 0; i < order.length; ++i) {
+            arguments[i] = fields.get(order[i]);
+        }
+        instance = (T) declaredConstructors.newInstance(arguments);
+        return instance;
+    }
+
+    private <T> Constructor<?> getMatchingConstructor(Class<T> clazz) {
+        List<Constructor<?>> creatorConstructor = Arrays.stream(clazz.getConstructors()).filter(
+                constructor -> constructor.isAnnotationPresent(CreatorConstructor.class)
+        ).toList();
+        return Check.requireSingleItem(
+                creatorConstructor,
+                "Creator constructor " + clazz.getName()
+        );
     }
 
     private Object mapValue(Field field, Node<Symbol> childNode) throws Exception {

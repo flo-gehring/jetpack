@@ -1,5 +1,6 @@
 package de.flogehring.jetpack.annotationmapper;
 
+import de.flogehring.jetpack.annotationmapper.creationstrategies.CreationStrategyReflection;
 import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.parse.Grammar;
@@ -57,6 +58,7 @@ public class MapperTest {
     @FromRule("Car")
     @EqualsAndHashCode
     @ToString
+    @CreationStrategyReflection
     public static class Car implements Vehicle {
 
         public Car() {
@@ -73,6 +75,7 @@ public class MapperTest {
     @FromRule("Train")
     @EqualsAndHashCode
     @ToString
+    @CreationStrategyReflection
     public static class Train implements Vehicle {
     }
 
@@ -84,6 +87,7 @@ public class MapperTest {
     @EqualsAndHashCode
     @ToString
     @FromRule("Electric")
+    @CreationStrategyReflection
     public static class Electric implements Engine {
 
         @FromChild(index = 3)
@@ -99,6 +103,7 @@ public class MapperTest {
     @EqualsAndHashCode
     @ToString
     @FromRule("Gas")
+    @CreationStrategyReflection
     public static class Gas implements Engine {
         public int numHp;
     }
@@ -106,6 +111,7 @@ public class MapperTest {
     @FromRule("Seats")
     @ToString
     @EqualsAndHashCode
+    @CreationStrategyReflection
     public static class Seats {
         @FromChild(index = 1)
         public int seats;
