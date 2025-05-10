@@ -15,7 +15,19 @@ import java.util.stream.Stream;
 @SuppressWarnings("unchecked")
 public class Mapper {
 
-    public static <T> T map(Node<Symbol> node, Class<T> clazz) throws Exception {
+    private final PrimitiveMapper primitiveMapper;
+
+    private Mapper(PrimitiveMapper primitiveMapper) {
+        this.primitiveMapper = primitiveMapper;
+    }
+
+    public static Mapper defaultMapper() {
+        return new Mapper(
+                new DefaultPrimitiveMapper()
+        );
+    }
+
+    public <T> T map(Node<Symbol> node, Class<T> clazz) throws Exception {
         Symbol symbol = node.getValue();
         if (symbol instanceof Symbol.NonTerminal(var name)) {
             T instance;
@@ -38,14 +50,14 @@ public class Mapper {
         }
     }
 
-    private static <T> T mapConcreteClass(Node<Symbol> node, Class<T> clazz, String name) throws Exception {
+    private <T> T mapConcreteClass(Node<Symbol> node, Class<T> clazz, String name) throws Exception {
         T instance;
         instance = clazz.getConstructor().newInstance();
         FromRule rule = clazz.getAnnotation(FromRule.class);
         if (rule == null || !rule.value().equals(name)) {
             throw new IllegalArgumentException("No matching rule found for class " + clazz.getSimpleName());
         }
-        for (Field field : clazz.getFields()) {
+        for (Field field : clazz.getDeclaredFields()) {
             FromChild childAnnotation = field.getAnnotation(FromChild.class);
             if (childAnnotation != null) {
                 Node<Symbol> childNode = node.getChildren().get(childAnnotation.index());
@@ -56,7 +68,7 @@ public class Mapper {
         return instance;
     }
 
-    private static Object mapValue(Field field, Node<Symbol> childNode) throws Exception {
+    private Object mapValue(Field field, Node<Symbol> childNode) throws Exception {
         Object result;
         Class<?> fieldType = field.getType();
         if (fieldType.equals(String.class)) {
@@ -80,7 +92,7 @@ public class Mapper {
         return result;
     }
 
-    private static List<Object> parseList(Field field, Node<Symbol> childNode) throws Exception {
+    private List<Object> parseList(Field field, Node<Symbol> childNode) throws Exception {
         List<Object> list = new ArrayList<>();
         ParameterizedType listType = (ParameterizedType) field.getGenericType();
         Class<?> listElementType = (Class<?>) listType.getActualTypeArguments()[0];
@@ -90,51 +102,57 @@ public class Mapper {
         return list;
     }
 
-    private static <T> Object getPrimitiveValue(Class<T> fieldType, String terminalValue) {
+    private <T> Object getPrimitiveValue(Class<T> fieldType, String terminalValue) {
         if (fieldType.equals(Integer.TYPE)) {
-            return Integer.parseInt(terminalValue);
+            return primitiveMapper.mapInt(terminalValue);
         } else if (fieldType.equals(Byte.TYPE)) {
-            return Byte.parseByte(terminalValue, 8);
+            return primitiveMapper.mapByte(terminalValue);
         } else if (fieldType.equals(Boolean.TYPE)) {
-            // TODO Attach Meta-Info to custom parse True and False
-            return Boolean.parseBoolean(terminalValue);
+            return primitiveMapper.mapBoolean(terminalValue);
         } else if (fieldType.equals(Character.TYPE)) {
-            // TODO Parse char Values
-            throw new RuntimeException("Can't parse Char values yet");
+            return primitiveMapper.mapChar(terminalValue);
         } else if (fieldType.equals(Long.TYPE)) {
-            return Long.valueOf(terminalValue);
+            return primitiveMapper.mapLong(terminalValue);
         } else if (fieldType.equals(Float.TYPE)) {
-            return Float.parseFloat(terminalValue);
+            return primitiveMapper.mapFloat(terminalValue);
         } else if (fieldType.equals(Short.TYPE)) {
-            return Short.valueOf(terminalValue);
+            return primitiveMapper.mapShort(terminalValue);
         } else if (fieldType.equals(Double.TYPE)) {
-            // TODO Attach Meta-Info to parse Numbers by a custom format
-            return Double.parseDouble(terminalValue);
+            return primitiveMapper.mapDouble(terminalValue);
         } else {
             throw new RuntimeException("Error parsing type " + fieldType + " as primitive value");
         }
     }
 
-    private static <T> T mapInterface(Node<Symbol> node, Class<T> clazz) throws Exception {
-        Delegate[] annotations = clazz.getAnnotationsByType(Delegate.class);
+    private <T> T mapInterface(Node<Symbol> node, Class<T> clazz) throws Exception {
         Node<Symbol> child = Check.requireSingleItem(
                 node.getChildren(),
                 "Interface Annotated with from Rule " + clazz.getSimpleName()
         );
-        if (child.getValue() instanceof Symbol.NonTerminal(var nameChild)) {
-            List<Class<Object>> delegateClasses = resolveDelegates(annotations);
-            List<Class<Object>> list = delegateClasses.stream()
-                    .filter(delegateClass -> delegateClass.getAnnotation(FromRule.class).value().equals(nameChild))
-                    .toList();
-            Class<Object> subclassForRule = Check.requireSingleItem(
-                    list,
-                    MessageFormat.format("Found not exactly one matching class for rule {0} extending from {1}",
-                            nameChild, clazz.getName())
-            );
+        if (child.getValue() instanceof Symbol.NonTerminal(var rule)) {
+            Class<Object> subclassForRule = getSubclassForInterface(clazz, rule);
             return (T) map(child, subclassForRule);
         } else {
             throw new RuntimeException("Cant parse abstract class from terminal node");
         }
+    }
+
+    private static Class<Object> getSubclassForInterface(Class<?> clazz, String rule) {
+        Delegate[] annotations = clazz.getAnnotationsByType(Delegate.class);
+        List<Class<Object>> delegateClasses = resolveDelegates(annotations);
+        List<Class<Object>> list = delegateClasses.stream()
+                .filter(delegateClass ->
+                        delegateClass.getAnnotation(FromRule.class).value()
+                                .equals(rule))
+                .toList();
+        return Check.requireSingleItem(
+                list,
+                MessageFormat.format(
+                        "Found not exactly one matching class for rule {0} extending from {1}",
+                        rule,
+                        clazz.getName()
+                )
+        );
     }
 
     private static List<Class<Object>> resolveDelegates(Delegate[] annotations) {
@@ -157,7 +175,7 @@ public class Mapper {
         return Stream.concat(classes.stream(), transitive.stream()).toList();
     }
 
-    private static String getTerminalValue(Node<Symbol> childNode) {
+    private String getTerminalValue(Node<Symbol> childNode) {
         if (childNode.getValue() instanceof Symbol.Terminal(var text)) {
             return text;
         } else {

@@ -45,7 +45,7 @@ public class MapperTest {
         seats.seats = 5;
         expected.seats = seats;
         expected.extras = List.of(Extra.AC, Extra.CAR_PLAY);
-        assertEquals(expected, Mapper.map(parsed, Vehicle.class));
+        assertEquals(expected, Mapper.defaultMapper().map(parsed, Vehicle.class));
     }
 
     @FromRule("Vehicle")
