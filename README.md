@@ -13,11 +13,18 @@ Furthermore, it provides a way to construct Java-Objects from the parse tree. Yo
 or an annotation based approach. There are test cases as an example for both approaches.
 
 ### Annotation based Object Construction
-You can create Objects from the parse tree vie the `@FromRule` and `@FromChild` annotations. 
+You can create Objects from the parse tree via the `@FromRule` and `@FromChild` annotations. 
 There are tests documenting how to do this.  
-Caveats:
-* Grammar Stucture and Object Structure have to closely match
-* The parsing of "primitive" type is limited to the native Java `fromString` Methods
-* The fields of the need to be public and not final.
-* A parameterless constructor for each class that is constructed by `@FromRule` must exist. 
-* :warning: Do expect the annotations to change.
+Caveat: Grammar Stucture and Object Structure have to closely match
+
+Classes that are parsed need to be annotated with `@FromRule`, so there needs to be one Rule per class.
+Fields of the Class which need to be populated from the grammar need to be annotated with `@FromChild(index = <xy>)`. 
+The index (starting at 0) is the index of the corresponding child of the rule corresponding to the class. 
+See `de.flogehring.jetpack.annotationmapper.MapperTest` on how to use this.
+
+#### Object Creation Strategies
+As of now, there are two Creation Strategies, which define how an object is actually created: 
+* `CreationStrategyReflection`: First creates an object with a parameterless constructor and then sets the fields via reflection.
+  * Caveats: All Fields of the class need to be public and mutable. There needs to be a parameterless public constructor.
+* `CreationStrategyConstructor`:  Creates the object with a given constructor.
+  * Is more "hands on". You need to define which constructor to use with the `@CreatorConstructor` annotation and specify the order of the fields.
