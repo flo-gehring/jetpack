@@ -6,16 +6,17 @@ import de.flogehring.jetpack.util.Check;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unchecked")
 public class Mapper {
 
     public static <T> T map(Node<Symbol> node, Class<T> clazz) throws Exception {
         Symbol symbol = node.getValue();
-
         if (symbol instanceof Symbol.NonTerminal(var name)) {
             T instance;
             if (clazz.isInterface()) {
@@ -115,17 +116,45 @@ public class Mapper {
     }
 
     private static <T> T mapInterface(Node<Symbol> node, Class<T> clazz) throws Exception {
-        OnRule[] annotations = clazz.getAnnotationsByType(OnRule.class);
-        Node<Symbol> child = Check.requireSingleItem(node.getChildren(), "Interface Annotated with from Rule " + clazz.getSimpleName());
+        Delegate[] annotations = clazz.getAnnotationsByType(Delegate.class);
+        Node<Symbol> child = Check.requireSingleItem(
+                node.getChildren(),
+                "Interface Annotated with from Rule " + clazz.getSimpleName()
+        );
         if (child.getValue() instanceof Symbol.NonTerminal(var nameChild)) {
-            OnRule ruleForSubclass = Arrays.stream(annotations).
-                    filter(onRule -> onRule.rule().equals(nameChild))
-                    .findFirst()
-                    .orElseThrow();
-            return (T) map(child, ruleForSubclass.clazz());
+            List<Class<Object>> delegateClasses = resolveDelegates(annotations);
+            List<Class<Object>> list = delegateClasses.stream()
+                    .filter(delegateClass -> delegateClass.getAnnotation(FromRule.class).value().equals(nameChild))
+                    .toList();
+            Class<Object> subclassForRule = Check.requireSingleItem(
+                    list,
+                    MessageFormat.format("Found not exactly one matching class for rule {0} extending from {1}",
+                            nameChild, clazz.getName())
+            );
+            return (T) map(child, subclassForRule);
         } else {
             throw new RuntimeException("Cant parse abstract class from terminal node");
         }
+    }
+
+    private static List<Class<Object>> resolveDelegates(Delegate[] annotations) {
+        List<Class<Object>> classes = Arrays.stream(annotations).
+                map(delegate -> (Class<Object>) delegate.clazz())
+                .toList();
+        List<Delegate> delegateAnnotationsOfTransitveClasses = Arrays.stream(annotations)
+                .filter(Delegate::transitive)
+                .map(Delegate::clazz)
+                .flatMap(clazz -> Arrays.stream(clazz.getAnnotationsByType(Delegate.class)))
+                .toList();
+        List<Class<Object>> transitive;
+        if (!delegateAnnotationsOfTransitveClasses.isEmpty()) {
+            transitive = resolveDelegates(
+                    delegateAnnotationsOfTransitveClasses.toArray(Delegate[]::new)
+            );
+        } else {
+            transitive = List.of();
+        }
+        return Stream.concat(classes.stream(), transitive.stream()).toList();
     }
 
     private static String getTerminalValue(Node<Symbol> childNode) {

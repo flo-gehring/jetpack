@@ -49,8 +49,8 @@ public class MapperTest {
     }
 
     @FromRule("Vehicle")
-    @OnRule(rule = "Car", clazz = Car.class)
-    @OnRule(rule = "Train", clazz = Train.class)
+    @Delegate(clazz = Car.class)
+    @Delegate(clazz = Train.class)
     public interface Vehicle {
     }
 
@@ -76,8 +76,8 @@ public class MapperTest {
     public static class Train implements Vehicle {
     }
 
-    @OnRule(rule = "Gas", clazz = Gas.class)
-    @OnRule(rule = "Electric", clazz = Electric.class)
+    @Delegate(clazz = Gas.class)
+    @Delegate(clazz = Electric.class)
     public interface Engine {
     }
 
