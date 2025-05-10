@@ -1,31 +1,43 @@
 package de.flogehring.jetpack.annotationmapper;
 
+import de.flogehring.jetpack.annotationmapper.creationstrategies.CreationStrategyConstructor;
+import de.flogehring.jetpack.annotationmapper.creationstrategies.CreationStrategyReflection;
+import de.flogehring.jetpack.annotationmapper.creationstrategies.CreatorConstructor;
 import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.util.Check;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unchecked")
 public class Mapper {
 
-    public static <T> T map(Node<Symbol> node, Class<T> clazz) throws Exception {
-        Symbol symbol = node.getValue();
+    private final PrimitiveMapper primitiveMapper;
 
+    private Mapper(PrimitiveMapper primitiveMapper) {
+        this.primitiveMapper = primitiveMapper;
+    }
+
+    public static Mapper defaultMapper() {
+        return new Mapper(
+                new DefaultPrimitiveMapper()
+        );
+    }
+
+    public <T> T map(Node<Symbol> node, Class<T> clazz) throws Exception {
+        Symbol symbol = node.getValue();
         if (symbol instanceof Symbol.NonTerminal(var name)) {
             T instance;
             if (clazz.isInterface()) {
                 instance = mapInterface(node, clazz);
             } else if (clazz.isEnum()) {
-                String s = getTerminalValue(node);
-                instance = Arrays.stream(clazz.getEnumConstants())
-                        .filter(enumConstant -> enumConstant.toString().equals(s))
-                        .findAny()
-                        .orElseThrow(() -> new RuntimeException("Can't find ENUM Constant " + s + " for " + clazz));
+                instance = mapEnum(node, clazz);
             } else if (clazz.isPrimitive()) {
                 instance = (T) getPrimitiveValue(clazz, getTerminalValue(node));
             } else {
@@ -37,14 +49,47 @@ public class Mapper {
         }
     }
 
-    private static <T> T mapConcreteClass(Node<Symbol> node, Class<T> clazz, String name) throws Exception {
+    private <T> T mapEnum(Node<Symbol> node, Class<T> clazz) {
+        T instance;
+        String s = getTerminalValue(node);
+        instance = Arrays.stream(clazz.getEnumConstants())
+                .filter(enumConstant -> enumConstant.toString().equals(s))
+                .findAny()
+                .orElseThrow(() -> new RuntimeException("Can't find ENUM Constant " + s + " for " + clazz));
+        return instance;
+    }
+
+    private <T> T mapConcreteClass(Node<Symbol> node, Class<T> clazz, String name) throws Exception {
+        List<Annotation> creationStrategies = Arrays.stream(clazz.getAnnotations()).filter(
+                annotation ->
+                        Set.of(CreationStrategyConstructor.class, CreationStrategyReflection.class).contains(annotation.annotationType())
+        ).toList();
+        Annotation creationStrategy = Check.requireSingleItem(
+                creationStrategies,
+                "Not Exactly one creation strategy for " + clazz.getName() + " found"
+        );
+        T instance;
+        if(creationStrategy.annotationType().equals(CreationStrategyReflection.class)) {
+            instance = createInstanceViaReflection(node, clazz, name);
+        }
+        else if(creationStrategy.annotationType().equals(CreationStrategyConstructor.class)) {
+            instance = createInstanceViaConstructor(node, clazz);
+        }
+        else {
+            throw new RuntimeException("Unknown CreationStrategy: " + creationStrategy.annotationType().getName());
+        }
+        return instance;
+
+    }
+
+    private <T> T createInstanceViaReflection(Node<Symbol> node, Class<T> clazz, String name) throws Exception {
         T instance;
         instance = clazz.getConstructor().newInstance();
         FromRule rule = clazz.getAnnotation(FromRule.class);
         if (rule == null || !rule.value().equals(name)) {
             throw new IllegalArgumentException("No matching rule found for class " + clazz.getSimpleName());
         }
-        for (Field field : clazz.getFields()) {
+        for (Field field : clazz.getDeclaredFields()) {
             FromChild childAnnotation = field.getAnnotation(FromChild.class);
             if (childAnnotation != null) {
                 Node<Symbol> childNode = node.getChildren().get(childAnnotation.index());
@@ -55,7 +100,42 @@ public class Mapper {
         return instance;
     }
 
-    private static Object mapValue(Field field, Node<Symbol> childNode) throws Exception {
+    private <T> T createInstanceViaConstructor(
+            Node<Symbol> node,
+            Class<T> clazz
+    ) throws Exception {
+        T instance;
+        Map<String, Object> fields = new HashMap<>();
+        for (Field field : clazz.getDeclaredFields()) {
+            FromChild childAnnotation = field.getAnnotation(FromChild.class);
+            if (childAnnotation != null) {
+                Node<Symbol> childNode = node.getChildren().get(childAnnotation.index());
+                Object valueForField = mapValue(field, childNode);
+                fields.put(field.getName(), valueForField);
+            }
+        }
+        Constructor<?> declaredConstructors = getMatchingConstructor(clazz);
+        CreatorConstructor annotation = declaredConstructors.getAnnotation(CreatorConstructor.class);
+        String[] order = annotation.order();
+        Object[] arguments = new Object[order.length];
+        for(int i = 0; i < order.length; ++i) {
+            arguments[i] = fields.get(order[i]);
+        }
+        instance = (T) declaredConstructors.newInstance(arguments);
+        return instance;
+    }
+
+    private <T> Constructor<?> getMatchingConstructor(Class<T> clazz) {
+        List<Constructor<?>> creatorConstructor = Arrays.stream(clazz.getConstructors()).filter(
+                constructor -> constructor.isAnnotationPresent(CreatorConstructor.class)
+        ).toList();
+        return Check.requireSingleItem(
+                creatorConstructor,
+                "Creator constructor " + clazz.getName()
+        );
+    }
+
+    private Object mapValue(Field field, Node<Symbol> childNode) throws Exception {
         Object result;
         Class<?> fieldType = field.getType();
         if (fieldType.equals(String.class)) {
@@ -79,7 +159,7 @@ public class Mapper {
         return result;
     }
 
-    private static List<Object> parseList(Field field, Node<Symbol> childNode) throws Exception {
+    private List<Object> parseList(Field field, Node<Symbol> childNode) throws Exception {
         List<Object> list = new ArrayList<>();
         ParameterizedType listType = (ParameterizedType) field.getGenericType();
         Class<?> listElementType = (Class<?>) listType.getActualTypeArguments()[0];
@@ -89,46 +169,80 @@ public class Mapper {
         return list;
     }
 
-    private static <T> Object getPrimitiveValue(Class<T> fieldType, String terminalValue) {
+    private <T> Object getPrimitiveValue(Class<T> fieldType, String terminalValue) {
         if (fieldType.equals(Integer.TYPE)) {
-            return Integer.parseInt(terminalValue);
+            return primitiveMapper.mapInt(terminalValue);
         } else if (fieldType.equals(Byte.TYPE)) {
-            return Byte.parseByte(terminalValue, 8);
+            return primitiveMapper.mapByte(terminalValue);
         } else if (fieldType.equals(Boolean.TYPE)) {
-            // TODO Attach Meta-Info to custom parse True and False
-            return Boolean.parseBoolean(terminalValue);
+            return primitiveMapper.mapBoolean(terminalValue);
         } else if (fieldType.equals(Character.TYPE)) {
-            // TODO Parse char Values
-            throw new RuntimeException("Can't parse Char values yet");
+            return primitiveMapper.mapChar(terminalValue);
         } else if (fieldType.equals(Long.TYPE)) {
-            return Long.valueOf(terminalValue);
+            return primitiveMapper.mapLong(terminalValue);
         } else if (fieldType.equals(Float.TYPE)) {
-            return Float.parseFloat(terminalValue);
+            return primitiveMapper.mapFloat(terminalValue);
         } else if (fieldType.equals(Short.TYPE)) {
-            return Short.valueOf(terminalValue);
+            return primitiveMapper.mapShort(terminalValue);
         } else if (fieldType.equals(Double.TYPE)) {
-            // TODO Attach Meta-Info to parse Numbers by a custom format
-            return Double.parseDouble(terminalValue);
+            return primitiveMapper.mapDouble(terminalValue);
         } else {
             throw new RuntimeException("Error parsing type " + fieldType + " as primitive value");
         }
     }
 
-    private static <T> T mapInterface(Node<Symbol> node, Class<T> clazz) throws Exception {
-        OnRule[] annotations = clazz.getAnnotationsByType(OnRule.class);
-        Node<Symbol> child = Check.requireSingleItem(node.getChildren(), "Interface Annotated with from Rule " + clazz.getSimpleName());
-        if (child.getValue() instanceof Symbol.NonTerminal(var nameChild)) {
-            OnRule ruleForSubclass = Arrays.stream(annotations).
-                    filter(onRule -> onRule.rule().equals(nameChild))
-                    .findFirst()
-                    .orElseThrow();
-            return (T) map(child, ruleForSubclass.clazz());
+    private <T> T mapInterface(Node<Symbol> node, Class<T> clazz) throws Exception {
+        Node<Symbol> child = Check.requireSingleItem(
+                node.getChildren(),
+                "Interface Annotated with from Rule " + clazz.getSimpleName()
+        );
+        if (child.getValue() instanceof Symbol.NonTerminal(var rule)) {
+            Class<Object> subclassForRule = getSubclassForInterface(clazz, rule);
+            return (T) map(child, subclassForRule);
         } else {
             throw new RuntimeException("Cant parse abstract class from terminal node");
         }
     }
 
-    private static String getTerminalValue(Node<Symbol> childNode) {
+    private static Class<Object> getSubclassForInterface(Class<?> clazz, String rule) {
+        Delegate[] annotations = clazz.getAnnotationsByType(Delegate.class);
+        List<Class<Object>> delegateClasses = resolveDelegates(annotations);
+        List<Class<Object>> list = delegateClasses.stream()
+                .filter(delegateClass ->
+                        delegateClass.getAnnotation(FromRule.class).value()
+                                .equals(rule))
+                .toList();
+        return Check.requireSingleItem(
+                list,
+                MessageFormat.format(
+                        "Found not exactly one matching class for rule {0} extending from {1}",
+                        rule,
+                        clazz.getName()
+                )
+        );
+    }
+
+    private static List<Class<Object>> resolveDelegates(Delegate[] annotations) {
+        List<Class<Object>> classes = Arrays.stream(annotations).
+                map(delegate -> (Class<Object>) delegate.clazz())
+                .toList();
+        List<Delegate> delegateAnnotationsOfTransitveClasses = Arrays.stream(annotations)
+                .filter(Delegate::transitive)
+                .map(Delegate::clazz)
+                .flatMap(clazz -> Arrays.stream(clazz.getAnnotationsByType(Delegate.class)))
+                .toList();
+        List<Class<Object>> transitive;
+        if (!delegateAnnotationsOfTransitveClasses.isEmpty()) {
+            transitive = resolveDelegates(
+                    delegateAnnotationsOfTransitveClasses.toArray(Delegate[]::new)
+            );
+        } else {
+            transitive = List.of();
+        }
+        return Stream.concat(classes.stream(), transitive.stream()).toList();
+    }
+
+    private String getTerminalValue(Node<Symbol> childNode) {
         if (childNode.getValue() instanceof Symbol.Terminal(var text)) {
             return text;
         } else {

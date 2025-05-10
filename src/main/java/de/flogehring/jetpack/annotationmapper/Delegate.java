@@ -5,8 +5,8 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Repeatable(MapAbstract.class)
-public @interface OnRule {
+public @interface Delegate {
 
-    String rule();
     Class<?> clazz();
+    boolean transitive() default false;
 }

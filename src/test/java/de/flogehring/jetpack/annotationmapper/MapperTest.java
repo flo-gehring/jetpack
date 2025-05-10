@@ -1,5 +1,6 @@
 package de.flogehring.jetpack.annotationmapper;
 
+import de.flogehring.jetpack.annotationmapper.creationstrategies.CreationStrategyReflection;
 import de.flogehring.jetpack.datatypes.Node;
 import de.flogehring.jetpack.grammar.Symbol;
 import de.flogehring.jetpack.parse.Grammar;
@@ -45,18 +46,19 @@ public class MapperTest {
         seats.seats = 5;
         expected.seats = seats;
         expected.extras = List.of(Extra.AC, Extra.CAR_PLAY);
-        assertEquals(expected, Mapper.map(parsed, Vehicle.class));
+        assertEquals(expected, Mapper.defaultMapper().map(parsed, Vehicle.class));
     }
 
     @FromRule("Vehicle")
-    @OnRule(rule = "Car", clazz = Car.class)
-    @OnRule(rule = "Train", clazz = Train.class)
+    @Delegate(clazz = Car.class)
+    @Delegate(clazz = Train.class)
     public interface Vehicle {
     }
 
     @FromRule("Car")
     @EqualsAndHashCode
     @ToString
+    @CreationStrategyReflection
     public static class Car implements Vehicle {
 
         public Car() {
@@ -73,17 +75,19 @@ public class MapperTest {
     @FromRule("Train")
     @EqualsAndHashCode
     @ToString
+    @CreationStrategyReflection
     public static class Train implements Vehicle {
     }
 
-    @OnRule(rule = "Gas", clazz = Gas.class)
-    @OnRule(rule = "Electric", clazz = Electric.class)
+    @Delegate(clazz = Gas.class)
+    @Delegate(clazz = Electric.class)
     public interface Engine {
     }
 
     @EqualsAndHashCode
     @ToString
     @FromRule("Electric")
+    @CreationStrategyReflection
     public static class Electric implements Engine {
 
         @FromChild(index = 3)
@@ -99,6 +103,7 @@ public class MapperTest {
     @EqualsAndHashCode
     @ToString
     @FromRule("Gas")
+    @CreationStrategyReflection
     public static class Gas implements Engine {
         public int numHp;
     }
@@ -106,6 +111,7 @@ public class MapperTest {
     @FromRule("Seats")
     @ToString
     @EqualsAndHashCode
+    @CreationStrategyReflection
     public static class Seats {
         @FromChild(index = 1)
         public int seats;
