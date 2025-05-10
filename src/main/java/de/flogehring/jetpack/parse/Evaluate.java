@@ -66,7 +66,8 @@ class Evaluate {
     private static Either<ConsumedExpression, String> applySymbolNonRecursive(
             Symbol symbol,
             Input input,
-            int currentPosition, Function<Symbol.NonTerminal, Expression> grammar,
+            int currentPosition,
+            Function<Symbol.NonTerminal, Expression> grammar,
             ParsingState parsingState
     ) {
         return switch (symbol) {
@@ -77,6 +78,12 @@ class Evaluate {
                     grammar,
                     parsingState,
                     nonTerminal
+            );
+            case Symbol.Empty() -> Either.ofThis(
+                    new ConsumedExpression(
+                            currentPosition,
+                            List.of()
+                    )
             );
         };
     }
@@ -252,6 +259,12 @@ class Evaluate {
                                 parsingState,
                                 grammar,
                                 startingPositionForEvalGrowCall
+                        );
+                        case Symbol.Empty() -> Either.ofThis(
+                                new ConsumedExpression(
+                                        currentPosition1,
+                                        List.of()
+                                )
                         );
                     };
                 };
