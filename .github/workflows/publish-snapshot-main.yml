@@ -1,6 +1,7 @@
 name: Publish package to GitHub Packages
-on: workflow_dispatch
-
+on:
+  push:
+    branches: [ main ]
 jobs:
   publish-snapshot:
     runs-on: ubuntu-latest
