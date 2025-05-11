@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "de.friendlyhedgehog"
-version = "0.3"
+version = "0.3-SNAPSHOT"
 repositories {
     mavenCentral()
 }
@@ -18,13 +18,23 @@ java {
 
 
 publishing {
+
+    publications {
+        create<MavenPublication>("gpr") {
+            from(components["java"])
+            groupId = "com.github.flo-gehring"
+            artifactId = "jetpack"
+            version = "0.3.0-SNAPSHOT"
+        }
+    }
+
     repositories {
         maven {
             name = "GithubPackages"
             url = uri("https://maven.pkg.github.com/flo-gehring/jetpack")
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USERNAME")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
             }
         }
     }
