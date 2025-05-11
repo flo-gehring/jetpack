@@ -43,7 +43,7 @@ publishing {
                     developer {
                         id.set("flo-gehring")
                         name.set("Florian Gehring")
-                        email.set("florian.gehring@protonmail.com")
+                        email.set("fg_secondary@protonmail.com")
                     }
                 }
 
@@ -61,7 +61,7 @@ publishing {
             name = "GithubPackages"
             url = uri("https://maven.pkg.github.com/flo-gehring/jetpack")
             credentials {
-                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USERNAME")
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
                 password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
             }
         }
