@@ -22,9 +22,37 @@ publishing {
     publications {
         create<MavenPublication>("gpr") {
             from(components["java"])
-            groupId = "com.github.flo-gehring"
+            groupId = "de.friendlyhedgehog"
             artifactId = "jetpack"
             version = "0.3.0-SNAPSHOT"
+
+            pom {
+                name.set("Jetpack")
+                description.set("A little, packrat inspired parser.")
+                url.set("https://github.com/flo-gehring/jetpack")
+
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                        distribution.set("repo")
+                    }
+                }
+
+                developers {
+                    developer {
+                        id.set("flo-gehring")
+                        name.set("Florian Gehring")
+                        email.set("florian.gehring@protonmail.com")
+                    }
+                }
+
+                scm {
+                    connection.set("scm:git:https://github.com/flo-gehring/jetpack.git")
+                    developerConnection.set("scm:git:ssh://github.com:flo-gehring/jetpack.git")
+                    url.set("https://github.com/flo-gehring/jetpack")
+                }
+            }
         }
     }
 
