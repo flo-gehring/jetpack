@@ -2,17 +2,31 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
     id("java")
+    id("maven-publish")
 }
 
 group = "de.friendlyhedgehog"
 version = "0.3"
-
 repositories {
     mavenCentral()
 }
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(22))
+    }
+}
+
+
+publishing {
+    repositories {
+        maven {
+            name = "GithubPackages"
+            url = uri("https://maven.pkg.github.com/flo-gehring/jetpack")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }
 
