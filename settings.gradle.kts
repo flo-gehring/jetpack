@@ -1,2 +1,1 @@
-rootProject.name = "jetpackparser"
-
+rootProject.name = "jetpack"

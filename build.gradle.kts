@@ -4,8 +4,8 @@ plugins {
     id("java")
 }
 
-group = "de.flo-gehring"
-version = "1.0-SNAPSHOT"
+group = "de.friendlyhedgehog"
+version = "0.3"
 
 repositories {
     mavenCentral()
