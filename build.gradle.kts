@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "de.friendlyhedgehog"
-version = "0.3"
+version = "0.3-SNAPSHOT"
 repositories {
     mavenCentral()
 }
@@ -18,13 +18,51 @@ java {
 
 
 publishing {
+
+    publications {
+        create<MavenPublication>("gpr") {
+            from(components["java"])
+            groupId = "de.friendlyhedgehog"
+            artifactId = "jetpack"
+            version = "0.3.0-SNAPSHOT"
+
+            pom {
+                name.set("Jetpack")
+                description.set("A little, packrat inspired parser.")
+                url.set("https://github.com/flo-gehring/jetpack")
+
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                        distribution.set("repo")
+                    }
+                }
+
+                developers {
+                    developer {
+                        id.set("flo-gehring")
+                        name.set("Florian Gehring")
+                        email.set("florian.gehring@protonmail.com")
+                    }
+                }
+
+                scm {
+                    connection.set("scm:git:https://github.com/flo-gehring/jetpack.git")
+                    developerConnection.set("scm:git:ssh://github.com:flo-gehring/jetpack.git")
+                    url.set("https://github.com/flo-gehring/jetpack")
+                }
+            }
+        }
+    }
+
     repositories {
         maven {
             name = "GithubPackages"
             url = uri("https://maven.pkg.github.com/flo-gehring/jetpack")
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USERNAME")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
             }
         }
     }

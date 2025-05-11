@@ -4,6 +4,12 @@
 > It probably is obvious but this just a hobby project, and should not be used in any serious capacity.  
 > There are not many tests but surely a lot of bugs.  
 > Most features of a mature parser are missing.
+
+
+> [!INFO]  
+> When getting pulling the build from Github Packages in your Gradle / Maven build file, you need to specify
+> the url, because the group-id does not match the Repo!
+> `        url = uri("https://maven.pkg.github.com/flo-gehring/jetpack")`
 ## Scope 
 This implements a PEG Parser with the additional Feature, that it can parse left recursive grammars. To do so, it follows
 the approach of [Umeda and Maeda: Packrat Parsers Can Support Multiple Left-recursive
